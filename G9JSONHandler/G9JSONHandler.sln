@@ -1,0 +1,31 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.32630.194
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "G9JSONHandler", "G9JSONHandler\G9JSONHandler.csproj", "{B8DEC1A1-3FD7-4EB4-9D27-E12EF86113C1}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "G9JSONHandler_NUnitTest", "G9JSONHandler__NUnitTest\G9JSONHandler_NUnitTest.csproj", "{4CD51631-ED8E-4D36-B1C3-79ACA68B0963}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{B8DEC1A1-3FD7-4EB4-9D27-E12EF86113C1}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B8DEC1A1-3FD7-4EB4-9D27-E12EF86113C1}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B8DEC1A1-3FD7-4EB4-9D27-E12EF86113C1}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B8DEC1A1-3FD7-4EB4-9D27-E12EF86113C1}.Release|Any CPU.Build.0 = Release|Any CPU
+		{4CD51631-ED8E-4D36-B1C3-79ACA68B0963}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{4CD51631-ED8E-4D36-B1C3-79ACA68B0963}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{4CD51631-ED8E-4D36-B1C3-79ACA68B0963}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{4CD51631-ED8E-4D36-B1C3-79ACA68B0963}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {62DC52A5-1B0C-4F0D-A529-2C06F8BD368D}
+	EndGlobalSection
+EndGlobal
