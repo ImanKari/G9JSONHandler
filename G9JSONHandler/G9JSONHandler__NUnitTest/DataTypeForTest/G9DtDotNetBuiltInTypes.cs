@@ -13,9 +13,9 @@ namespace G9JSONHandler_NUnitTest.DataTypeForTest
         public decimal C3 = 999.999m;
         public bool D = true;
 
-        [G9JsonComment("1- This note comment is used just for tests!")]
-        [G9JsonComment("2- This note comment is used just for tests!")]
-        [G9JsonComment("3- This note comment is used just for tests!")]
+        [G9AttrJsonComment("1- This note comment is used just for tests!")]
+        [G9AttrJsonComment("2- This note comment is used just for tests!")]
+        [G9AttrJsonComment("3- This note comment is used just for tests!")]
         public DateTime E = DateTime.Parse("1990/09/01 09:09:09");
 
         public sbyte F1 = 3;
@@ -23,9 +23,9 @@ namespace G9JSONHandler_NUnitTest.DataTypeForTest
         public short F3 = 9;
         public ushort F4 = 13;
 
-        [G9JsonComment("1- This note comment is used just for tests!")]
-        [G9JsonComment("2- This note comment is used just for tests!")]
-        [G9JsonComment("3- This note comment is used just for tests!")]
+        [G9AttrJsonComment("1- This note comment is used just for tests!")]
+        [G9AttrJsonComment("2- This note comment is used just for tests!")]
+        [G9AttrJsonComment("3- This note comment is used just for tests!")]
         public int F5 = 16;
 
         public uint F6 = 19;

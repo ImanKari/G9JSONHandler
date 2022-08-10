@@ -4,23 +4,35 @@ namespace G9JSONHandler_NUnitTest.DataTypeForTest
 {
     public class G9DtTestObjectForParse
     {
-        [G9JsonComment("1- This note comment is used just for tests!")]
+        public string TestMultiLine = @"
+            Iman Kari
+            Sep, 01, 1990
+            G9TM
+            ";
+
+        [G9AttrJsonComment("1- This note comment is used just for tests!")]
         private string A1 = "G9TM1";
 
         public string A2 = "G9TM2";
 
-        [G9JsonComment("1- This note comment is used just for tests!")]
+        [G9AttrJsonComment("Test object array!")]
+        public G9DtSmallStructure[] AAA = new[]
+        {
+            new G9DtSmallStructure(), new G9DtSmallStructure(), new G9DtSmallStructure()
+        };
+
+        [G9AttrJsonComment("1- This note comment is used just for tests!")]
         public G9DtCustomObject CustomObject = new();
 
-        [G9JsonComment("1- This note comment is used just for tests!")]
-        [G9JsonComment("2- This note comment is used just for tests!")]
-        [G9JsonComment("3- This note comment is used just for tests!")]
+        [G9AttrJsonComment("1- This note comment is used just for tests!")]
+        [G9AttrJsonComment("2- This note comment is used just for tests!")]
+        [G9AttrJsonComment("3- This note comment is used just for tests!")]
         public G9DtDotNetBuiltInTypes DotNetBuiltInTypes = new();
 
-        [G9JsonStoreEnumAsString] [G9JsonCustomMemberName("ChangeToCustomName")]
+        [G9AttrJsonStoreEnumAsString] [G9AttrJsonCustomMemberName("ChangeToCustomName")]
         public Gender Gender = Gender.Unknown;
 
-        [G9JsonIgnoreMember] public string TestIgnoreCase = "Okay";
+        [G9AttrJsonIgnoreMember] public string TestIgnoreCase = "Okay";
 
         private int B1 { set; get; } = 333;
 
@@ -30,10 +42,10 @@ namespace G9JSONHandler_NUnitTest.DataTypeForTest
 
         public int B4 { get; } = 963;
 
-        [G9JsonStoreEnumAsString]
-        [G9JsonComment("1- This note comment is used just for tests!")]
-        [G9JsonComment("2- This note comment is used just for tests!")]
-        [G9JsonComment("3- This note comment is used just for tests!")]
+        [G9AttrJsonStoreEnumAsString]
+        [G9AttrJsonComment("1- This note comment is used just for tests!")]
+        [G9AttrJsonComment("2- This note comment is used just for tests!")]
+        [G9AttrJsonComment("3- This note comment is used just for tests!")]
         public Gender Gender2 { set; get; } = Gender.Women;
     }
 }

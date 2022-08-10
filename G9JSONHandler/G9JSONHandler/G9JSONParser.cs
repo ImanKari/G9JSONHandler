@@ -10,7 +10,6 @@ using G9AssemblyManagement.Enums;
 using G9AssemblyManagement.Helper;
 using G9AssemblyManagement.Interfaces;
 using G9JSONHandler.Attributes;
-using G9JSONHandler.Common;
 
 namespace G9JSONHandler
 {
@@ -169,22 +168,8 @@ namespace G9JSONHandler
         {
             if (json == "null") return null;
 
-            if (type.IsEnum)
-            {
-                if (json[0] == '"')
-                    json = json.Substring(1, json.Length - 2);
-                try
-                {
-                    return Enum.Parse(type, json, false);
-                }
-                catch
-                {
-                    return 0;
-                }
-            }
-
-            if (!G9CCommonHelper.IsEnumerableType(type) && type.G9IsTypeBuiltInDotNetType())
-                return ParseDotNetBuiltInTypes(type, json);
+            if (type.IsEnum || (!type.G9IsEnumerableType() && type.G9IsTypeBuiltInDotNetType()))
+                return PrepareStringType(json.Trim('"')).G9SmartChangeType(type);
 
             if (type.IsArray)
             {
@@ -253,7 +238,7 @@ namespace G9JSONHandler
                 }
             }
 
-            if (type == typeof(object)) return ParseAnonymousValue(json);
+            if (type == typeof(object)) return ParsingAnonymousValue(json);
             if (json[0] == '{' && json[json.Length - 1] == '}') return ParseObject(type, json);
 
             return null;
@@ -266,10 +251,8 @@ namespace G9JSONHandler
         /// <returns>Pure string data</returns>
         private static string PrepareStringType(string json)
         {
-            if (json.Length <= 2)
-                return string.Empty;
             var parseStringBuilder = new StringBuilder(json.Length);
-            for (var i = 1; i < json.Length - 1; ++i)
+            for (var i = 0; i < json.Length; ++i)
             {
                 if (json[i] == '\\' && i + 1 < json.Length - 1)
                 {
@@ -299,74 +282,11 @@ namespace G9JSONHandler
         }
 
         /// <summary>
-        ///     The helper method to parse .NET built-in types
+        ///     Method to try anonymous types
         /// </summary>
-        /// <param name="type">Specifies type of object item</param>
-        /// <param name="json">Specifies JSON data</param>
-        /// <returns>parsed object</returns>
-        private static object ParseDotNetBuiltInTypes(Type type, string json)
-        {
-            switch (Type.GetTypeCode(type))
-            {
-                case TypeCode.Char:
-                    return json.ToCharArray()[1];
-                case TypeCode.String:
-                    return PrepareStringType(json);
-                case TypeCode.Single:
-                case TypeCode.Double:
-                case TypeCode.Decimal:
-                case TypeCode.Boolean:
-                case TypeCode.SByte:
-                case TypeCode.Byte:
-                case TypeCode.Int16:
-                case TypeCode.UInt16:
-                case TypeCode.Int32:
-                case TypeCode.UInt32:
-                case TypeCode.Int64:
-                case TypeCode.UInt64:
-                    return Convert.ChangeType(json, type, CultureInfo.InvariantCulture);
-                case TypeCode.DateTime:
-                    return DateTime.Parse(json.Substring(1, json.Length - 2));
-                default:
-                    return ParseExceptionableTypes(type, json);
-            }
-        }
-
-        /// <summary>
-        ///     Method to parse exceptionable types
-        /// </summary>
-        /// <param name="type">Specifies type of object item</param>
-        /// <param name="json">Specifies JSON data</param>
-        /// <returns>parsed object</returns>
-        private static object ParseExceptionableTypes(Type type, string json)
-        {
-            if (type.GetMethods().Any(s => s.Name == nameof(TimeSpan.Parse)))
-            {
-                var instance = FormatterServices.GetUninitializedObject(type);
-                var method = instance
-                    .G9GetMethodsOfObject(G9EAccessModifier.Everything,
-                        s => s.Name == nameof(TimeSpan.Parse) && s.GetParameters().Length == 1 &&
-                             s.GetParameters()[0].ParameterType == typeof(string));
-                if (method.Any())
-                    return method[0].CallMethodWithResult<object>(json.Substring(1, json.Length - 2));
-            }
-
-            try
-            {
-                return Convert.ChangeType(json, type, CultureInfo.InvariantCulture);
-            }
-            catch
-            {
-                return Convert.ChangeType(json, type);
-            }
-        }
-
-        /// <summary>
-        ///     The method to parse anonymous value
-        /// </summary>
-        /// <param name="json">Specifies JSON data to analyze</param>
-        /// <returns></returns>
-        private static object ParseAnonymousValue(string json)
+        /// <param name="json">Json data</param>
+        /// <returns>Parsed object</returns>
+        private static object ParsingAnonymousValue(string json)
         {
             if (json.Length == 0)
                 return null;
@@ -377,7 +297,7 @@ namespace G9JSONHandler
                     return null;
                 var dict = new Dictionary<string, object>(elems.Count / 2);
                 for (var i = 0; i < elems.Count; i += 2)
-                    dict[elems[i].Substring(1, elems[i].Length - 2)] = ParseAnonymousValue(elems[i + 1]);
+                    dict[elems[i].Substring(1, elems[i].Length - 2)] = ParsingAnonymousValue(elems[i + 1]);
                 return dict;
             }
 
@@ -385,7 +305,7 @@ namespace G9JSONHandler
             {
                 var items = Splitter(json);
                 var finalList = new List<object>(items.Count);
-                finalList.AddRange(items.Select(ParseAnonymousValue));
+                finalList.AddRange(items.Select(ParsingAnonymousValue));
 
                 return finalList;
             }
@@ -434,7 +354,7 @@ namespace G9JSONHandler
         {
             foreach (var m in members)
             {
-                var nameAttr = m.GetCustomAttributes<G9JsonCustomMemberNameAttribute>(true);
+                var nameAttr = m.GetCustomAttributes<G9AttrJsonCustomMemberNameAttribute>(true);
                 dic.Add(nameAttr.Any() ? nameAttr[0].Name : m.Name, m);
             }
         }
@@ -460,12 +380,12 @@ namespace G9JSONHandler
             // Prepare Fields
             CreateDictionaryOfMembers(ref members,
                 instance.G9GetFieldsOfObject(G9EAccessModifier.Public,
-                    s => !s.GetCustomAttributes(typeof(G9JsonIgnoreMemberAttribute), true).Any()));
+                    s => !s.GetCustomAttributes(typeof(G9AttrJsonIgnoreMemberAttribute), true).Any()));
 
             // Prepare Properties
             CreateDictionaryOfMembers(ref members,
                 instance.G9GetPropertiesOfObject(G9EAccessModifier.Public,
-                    s => s.CanWrite && !s.GetCustomAttributes(typeof(G9JsonIgnoreMemberAttribute), true).Any()));
+                    s => s.CanWrite && !s.GetCustomAttributes(typeof(G9AttrJsonIgnoreMemberAttribute), true).Any()));
 
             for (var i = 0; i < elems.Count; i += 2)
             {

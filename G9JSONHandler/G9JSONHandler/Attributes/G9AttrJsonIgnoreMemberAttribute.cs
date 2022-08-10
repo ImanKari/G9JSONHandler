@@ -10,7 +10,7 @@ namespace G9JSONHandler.Attributes
         AllowMultiple = false,
         // ReSharper disable once RedundantAttributeUsageProperty
         Inherited = false)]
-    public class G9JsonIgnoreMemberAttribute : Attribute
+    public class G9AttrJsonIgnoreMemberAttribute : Attribute
     {
     }
 }

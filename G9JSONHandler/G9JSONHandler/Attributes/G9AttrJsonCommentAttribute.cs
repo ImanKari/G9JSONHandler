@@ -10,17 +10,17 @@ namespace G9JSONHandler.Attributes
         AllowMultiple = true,
         // ReSharper disable once RedundantAttributeUsageProperty
         Inherited = false)]
-    public class G9JsonComment : Attribute
+    public class G9AttrJsonCommentAttribute : Attribute
     {
         /// <summary>
         ///     Constructor
         /// </summary>
         /// <param name="customNote">Custom note (comment for JSON member item)</param>
-        public G9JsonComment(string customNote)
+        public G9AttrJsonCommentAttribute(string customNote)
         {
             if (string.IsNullOrEmpty(customNote))
                 throw new ArgumentNullException(nameof(customNote),
-                    $"The \"{nameof(customNote)}\" used for the \"{nameof(G9JsonComment)}\" argument can't be null.");
+                    $"The \"{nameof(customNote)}\" used for the \"{nameof(G9AttrJsonCommentAttribute)}\" argument can't be null.");
             CustomNot = customNote;
         }
 

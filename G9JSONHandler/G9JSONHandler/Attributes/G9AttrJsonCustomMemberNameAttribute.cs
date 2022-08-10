@@ -10,13 +10,13 @@ namespace G9JSONHandler.Attributes
         AllowMultiple = false,
         // ReSharper disable once RedundantAttributeUsageProperty
         Inherited = false)]
-    public sealed class G9JsonCustomMemberNameAttribute : Attribute
+    public sealed class G9AttrJsonCustomMemberNameAttribute : Attribute
     {
-        public G9JsonCustomMemberNameAttribute(string customName)
+        public G9AttrJsonCustomMemberNameAttribute(string customName)
         {
             if (string.IsNullOrEmpty(customName))
                 throw new ArgumentNullException(nameof(customName),
-                    $"The \"{nameof(customName)}\" used for the \"{nameof(G9JsonCustomMemberNameAttribute)}\" argument can't be null.");
+                    $"The \"{nameof(customName)}\" used for the \"{nameof(G9AttrJsonCustomMemberNameAttribute)}\" argument can't be null.");
             Name = customName;
         }
 
