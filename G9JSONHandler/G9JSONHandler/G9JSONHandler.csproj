@@ -4,7 +4,7 @@
 		<TargetFrameworks>net35;net40;net45;net451;net452;net46;netstandard2.0;netstandard2.1</TargetFrameworks>
 		<GeneratePackageOnBuild>true</GeneratePackageOnBuild>
 		<PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
-		<Version>2.0.0.3</Version>
+		<Version>2.0.0.4</Version>
 		<Authors>Iman Kari</Authors>
 		<Company>G9Studio</Company>
 		<Product>G9 JSON Handler</Product>
@@ -18,26 +18,23 @@
 		<NeutralLanguage>en</NeutralLanguage>
 		<PackageIcon>G9-Icon.png</PackageIcon>
 		<PackageIconUrl />
-		<AssemblyVersion>2.0.0.3</AssemblyVersion>
+		<AssemblyVersion>2.0.0.4</AssemblyVersion>
 		<PackageReleaseNotes>-- Fixed the problem with Enum while parsing to JSON as a number.
 -- Added an efficient guide "Readme.md"
 -- Fixed package (Source Link, Deterministic, Compiler Flags)
--- Completed tests</PackageReleaseNotes>
-		<FileVersion>2.0.0.3</FileVersion>
+-- Completed tests		</PackageReleaseNotes>
+		<FileVersion>2.0.0.4</FileVersion>
 
 		<DebugType>Embedded</DebugType>
 		<EmbedAllSources>True</EmbedAllSources>
 		<!-- Include symbol files (*.pdb) in the built .nupkg -->
-		<AllowedOutputExtensionsInPackageBuildOutputFolder>$(AllowedOutputExtensionsInPackageBuildOutputFolder);.pdb</AllowedOutputExtensionsInPackageBuildOutputFolder>
 
 		<PublishRepositoryUrl>true</PublishRepositoryUrl>
 		<IncludeSymbols>true</IncludeSymbols>
 		<IncludeSource>true</IncludeSource>
-		<!--<SymbolPackageFormat>snupkg</SymbolPackageFormat>-->
 		<Deterministic>true</Deterministic>
 		<EmbedUntrackedSources>true</EmbedUntrackedSources>
 		<ProduceReferenceAssembly>true</ProduceReferenceAssembly>
-
 		<PackageReadmeFile>README.md</PackageReadmeFile>
 	</PropertyGroup>
 
