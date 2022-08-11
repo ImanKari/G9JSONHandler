@@ -28,15 +28,15 @@
 		<DebugType>Embedded</DebugType>
 		<EmbedAllSources>True</EmbedAllSources>
 		<!-- Include symbol files (*.pdb) in the built .nupkg -->
-		<AllowedOutputExtensionsInPackageBuildOutputFolder>$(AllowedOutputExtensionsInPackageBuildOutputFolder);.pdb</AllowedOutputExtensionsInPackageBuildOutputFolder>
+		<!--<AllowedOutputExtensionsInPackageBuildOutputFolder>$(AllowedOutputExtensionsInPackageBuildOutputFolder);.pdb</AllowedOutputExtensionsInPackageBuildOutputFolder>-->
 
-		<PublishRepositoryUrl>true</PublishRepositoryUrl>
+		<!--<PublishRepositoryUrl>true</PublishRepositoryUrl>
 		<IncludeSymbols>true</IncludeSymbols>
 		<IncludeSource>true</IncludeSource>
 		<SymbolPackageFormat>snupkg</SymbolPackageFormat>
 		<Deterministic>true</Deterministic>
 		<EmbedUntrackedSources>true</EmbedUntrackedSources>
-		<ProduceReferenceAssembly>true</ProduceReferenceAssembly>
+		<ProduceReferenceAssembly>true</ProduceReferenceAssembly>-->
 	</PropertyGroup>
 
 	<ItemGroup>
