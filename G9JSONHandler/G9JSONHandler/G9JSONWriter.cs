@@ -19,13 +19,13 @@ namespace G9JSONHandler
         ///     Method to convert any object to JSON
         /// </summary>
         /// <param name="objectItem">Specifies an object item for converting to JSON</param>
-        /// <param name="unformatted">Specifies that JSON result must be formatted or not</param>
+        /// <param name="formatted">Specifies that JSON result must be formatted or not</param>
         /// <returns>A string object that is filled by JSON</returns>
-        public static string G9ObjectToJson(this object objectItem, bool unformatted = true)
+        public static string G9ObjectToJson(this object objectItem, bool formatted = false)
         {
             var stringBuilder = new StringBuilder();
             var tabsNumber = 0;
-            ParseObjectMembersToJson(stringBuilder, objectItem, unformatted, ref tabsNumber);
+            ParseObjectMembersToJson(stringBuilder, objectItem, !formatted, ref tabsNumber);
             return stringBuilder.ToString();
         }
 
@@ -111,7 +111,10 @@ namespace G9JSONHandler
                 case TypeCode.Double:
                 case TypeCode.Decimal:
                 case TypeCode.Boolean:
-                    stringBuilder.Append(objectItem.G9SmartChangeType<string>());
+                    if (type.IsEnum)
+                        stringBuilder.Append(objectItem.G9SmartChangeType(Enum.GetUnderlyingType(type)));
+                    else
+                        stringBuilder.Append(objectItem.G9SmartChangeType<string>());
                     break;
                 default:
                     stringBuilder.Append($"\"{objectItem.G9SmartChangeType<string>()}\"");
@@ -199,17 +202,18 @@ namespace G9JSONHandler
             ref int tabsNumber)
         {
             // Write note comments if that existed
-            var noteComments = (IList<G9AttrJsonCommentAttribute>)type.GetCustomAttributes(typeof(G9AttrJsonCommentAttribute), true);
+            var noteComments =
+                (IList<G9AttrJsonCommentAttribute>)type.GetCustomAttributes(typeof(G9AttrJsonCommentAttribute), true);
             if (noteComments.Any())
                 foreach (var note in noteComments)
                     WriteJsonNoteComment(stringBuilder, note.CustomNot, unformatted, tabsNumber);
-            
+
             if (unformatted)
                 stringBuilder.Append('{');
             else
                 stringBuilder.Append(stringBuilder.Length > 0 && stringBuilder[stringBuilder.Length - 1] != '\t'
                     ? $"\n{new string('\t', tabsNumber)}{{\n{new string('\t', ++tabsNumber)}"
-                    : $"{new string('\t', tabsNumber)}{{\n{new string('\t', ++tabsNumber)}");
+                    : $"{{\n{new string('\t', ++tabsNumber)}");
 
             var isFirst = true;
             var fieldInfos = objectItem.G9GetFieldsOfObject(G9EAccessModifier.Public,
@@ -233,7 +237,8 @@ namespace G9JSONHandler
                 var nameAttr = m.GetCustomAttributes<G9AttrJsonCustomMemberNameAttribute>(true);
                 stringBuilder.Append(nameAttr.Any() ? nameAttr[0].Name : m.Name);
                 stringBuilder.Append("\":");
-                if (m.FieldInfo.FieldType.IsEnum && m.GetCustomAttributes<G9AttrJsonStoreEnumAsStringAttribute>(true).Any())
+                if (m.FieldInfo.FieldType.IsEnum &&
+                    m.GetCustomAttributes<G9AttrJsonStoreEnumAsStringAttribute>(true).Any())
                     ParseObjectMembersToJson(stringBuilder, value.ToString(), unformatted, ref tabsNumber);
                 else
                     ParseObjectMembersToJson(stringBuilder, value, unformatted, ref tabsNumber);

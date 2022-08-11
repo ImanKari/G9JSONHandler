@@ -1,10 +1,5 @@
 using System;
-using System.Collections;
-using System.Collections.Generic;
-using System.Drawing;
 using System.Net;
-using System.Net.Mime;
-using G9AssemblyManagement.Helper;
 using G9JSONHandler;
 using G9JSONHandler_NUnitTest.DataTypeForTest;
 using NUnit.Framework;
@@ -13,10 +8,10 @@ namespace G9JSONHandler_NUnitTest
 {
     public class G9JSONHandlerNUnitTest
     {
-
-        private G9DtTestObjectForParse testObjectForParsing = new G9DtTestObjectForParse();
-        private string testJSONString_Unformatted = string.Empty;
         private string testJSONString_Formatted = string.Empty;
+        private string testJSONString_Unformatted = string.Empty;
+
+        private readonly G9DtTestObjectForParse testObjectForParsing = new();
 
         [SetUp]
         public void Setup()
@@ -36,7 +31,7 @@ namespace G9JSONHandler_NUnitTest
                         testObjectForParsing.DotNetBuiltInTypes.C == 9.9f &&
                         testObjectForParsing.DotNetBuiltInTypes.C3 == 999.999m &&
                         testObjectForParsing.DotNetBuiltInTypes.D && testObjectForParsing.DotNetBuiltInTypes.F8 == 26 &&
-                        testObjectForParsing.CustomObject.Gender == Gender.Men &&
+                        testObjectForParsing.CustomObject.Gender == Gender.Unknown &&
                         testObjectForParsing.CustomObject.FullName == "Iman Kari" &&
                         testObjectForParsing.CustomObject.NestedObjectA.B == "G9TM" &&
                         testObjectForParsing.CustomObject.NestedObjectB.E.Equals(
@@ -46,15 +41,15 @@ namespace G9JSONHandler_NUnitTest
                         testObjectForParsing.CustomObject.TestArray[8] == "Item 9" &&
                         testObjectForParsing.CustomObject.TestDictionary.Count == 9 &&
                         testObjectForParsing.CustomObject.TestDictionary["Key 9"] == "Value 9" &&
-                        ((G9DtSmallStructure)testObjectForParsing.AAA[1]).C && ((G9DtSmallStructure)testObjectForParsing.AAA[1]).B == 2 &&
-                        ((G9DtSmallStructure)testObjectForParsing.AAA[2]).C == false && ((G9DtSmallStructure)testObjectForParsing.AAA[2]).B == 3);
+                        testObjectForParsing.AAA[1].C && testObjectForParsing.AAA[1].B == 2 &&
+                        testObjectForParsing.AAA[2].C == false && testObjectForParsing.AAA[2].B == 3);
 
             // Converting to JSON by unformatted type
             testJSONString_Unformatted = testObjectForParsing.G9ObjectToJson();
             Assert.False(string.IsNullOrEmpty(testJSONString_Unformatted));
 
             // Converting to JSON by formatted type
-            testJSONString_Formatted = testObjectForParsing.G9ObjectToJson(false);
+            testJSONString_Formatted = testObjectForParsing.G9ObjectToJson(true);
             Assert.False(string.IsNullOrEmpty(testJSONString_Formatted));
         }
 
@@ -74,7 +69,7 @@ namespace G9JSONHandler_NUnitTest
                         testObjectUnformattedType.DotNetBuiltInTypes.C3 == 999.999m &&
                         testObjectUnformattedType.DotNetBuiltInTypes.D &&
                         testObjectUnformattedType.DotNetBuiltInTypes.F8 == 26 &&
-                        testObjectUnformattedType.CustomObject.Gender == Gender.Men &&
+                        testObjectUnformattedType.CustomObject.Gender == Gender.Unknown &&
                         testObjectUnformattedType.CustomObject.FullName == "Iman Kari" &&
                         testObjectUnformattedType.CustomObject.NestedObjectA.B == "G9TM" &&
                         testObjectUnformattedType.CustomObject.NestedObjectB.E.Equals(
@@ -84,8 +79,8 @@ namespace G9JSONHandler_NUnitTest
                         testObjectUnformattedType.CustomObject.TestArray[8] == "Item 9" &&
                         testObjectUnformattedType.CustomObject.TestDictionary.Count == 9 &&
                         testObjectUnformattedType.CustomObject.TestDictionary["Key 9"] == "Value 9" &&
-                        ((G9DtSmallStructure)testObjectUnformattedType.AAA[1]).C && ((G9DtSmallStructure)testObjectUnformattedType.AAA[1]).B == 2 &&
-                        ((G9DtSmallStructure)testObjectUnformattedType.AAA[2]).C == false && ((G9DtSmallStructure)testObjectUnformattedType.AAA[2]).B == 3 &&
+                        testObjectUnformattedType.AAA[1].C && testObjectUnformattedType.AAA[1].B == 2 &&
+                        testObjectUnformattedType.AAA[2].C == false && testObjectUnformattedType.AAA[2].B == 3 &&
                         testObjectUnformattedType.TestMultiLine == testObjectForParsing.TestMultiLine);
 
             // Converting to object by formatted type
@@ -100,7 +95,7 @@ namespace G9JSONHandler_NUnitTest
                         testObjectFormattedType.DotNetBuiltInTypes.C3 == 999.999m &&
                         testObjectFormattedType.DotNetBuiltInTypes.D &&
                         testObjectFormattedType.DotNetBuiltInTypes.F8 == 26 &&
-                        testObjectFormattedType.CustomObject.Gender == Gender.Men &&
+                        testObjectFormattedType.CustomObject.Gender == Gender.Unknown &&
                         testObjectFormattedType.CustomObject.FullName == "Iman Kari" &&
                         testObjectFormattedType.CustomObject.NestedObjectA.B == "G9TM" &&
                         testObjectFormattedType.CustomObject.NestedObjectB.E.Equals(
@@ -110,10 +105,9 @@ namespace G9JSONHandler_NUnitTest
                         testObjectFormattedType.CustomObject.TestArray[8] == "Item 9" &&
                         testObjectFormattedType.CustomObject.TestDictionary.Count == 9 &&
                         testObjectFormattedType.CustomObject.TestDictionary["Key 9"] == "Value 9" &&
-                        ((G9DtSmallStructure)testObjectFormattedType.AAA[1]).C && ((G9DtSmallStructure)testObjectFormattedType.AAA[1]).B == 2 &&
-                        ((G9DtSmallStructure)testObjectFormattedType.AAA[2]).C == false && ((G9DtSmallStructure)testObjectFormattedType.AAA[2]).B == 3 &&
+                        testObjectFormattedType.AAA[1].C && testObjectFormattedType.AAA[1].B == 2 &&
+                        testObjectFormattedType.AAA[2].C == false && testObjectFormattedType.AAA[2].B == 3 &&
                         testObjectFormattedType.TestMultiLine == testObjectForParsing.TestMultiLine);
-
         }
     }
 }

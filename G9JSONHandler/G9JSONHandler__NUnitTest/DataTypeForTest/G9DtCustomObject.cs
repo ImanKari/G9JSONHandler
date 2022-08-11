@@ -13,7 +13,7 @@ namespace G9JSONHandler_NUnitTest.DataTypeForTest
 
     public class G9DtCustomObject
     {
-        public Gender Gender = Gender.Men;
+        public Gender Gender = Gender.Unknown;
 
         public G9DtDotNetBuiltInTypes NestedObjectA = new();
 
