@@ -10,9 +10,10 @@ namespace G9JSONHandler_NUnitTest.DataTypeForTest
             G9TM
             ";
 
-        [G9AttrJsonComment("1- This note comment is used just for tests!")]
+        
         private string A1 = "G9TM1";
 
+        [G9AttrJsonComment("1- This note comment is used just for tests! Nonstandard Type!", true)]
         public string A2 = "G9TM2";
 
         [G9AttrJsonComment("Test object array!")]

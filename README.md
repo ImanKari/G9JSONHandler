@@ -1,10 +1,10 @@
-[![G9TM](https://raw.githubusercontent.com/ImanKari/G9JSONHandler/main/G9JSONHandler/Asset/G9JSONHandler.png)](https://github.com/ImanKari/G9JSONHandler)**G9JSONHandler**
+[![G9TM](https://raw.githubusercontent.com/ImanKari/G9JSONHandler/main/G9JSONHandler/Asset/G9JSONHandler.png)](https://github.com/ImanKari/G9JSONHandler) **G9JSONHandler**
 
 [![NuGet version (G9JSONHandler)](https://img.shields.io/nuget/v/G9JSONHandler.svg?style=flat-square)](https://www.nuget.org/packages/G9JSONHandler/)
 [![Azure DevOps Pipeline Build Status](https://raw.githubusercontent.com/ImanKari/G9JSONHandler/main/G9JSONHandler/Asset/AzureDevOpsPipelineBuildStatus.png)](https://g9tm.visualstudio.com/G9JSONHandler/_apis/build/status/G9JSONHandler?branchName=main)
 
 ## G9JSONHandler is a pretty small library for working with JSON.
-## Sample Object
+### Sample Object
 ```csharp
 using G9JSONHandler;
 using G9JSONHandler.Attributes;
@@ -27,7 +27,7 @@ class TestObject
 }
 ```
 
-## Object To JSON
+### Object To JSON
 ```csharp
 TestObject testObject = new TestObject();
 // Unformatted JSON
@@ -35,37 +35,35 @@ string unformattedJson = testObject.G9ObjectToJson();
 // Formatted JSON
 string formattedJson = testObject.G9ObjectToJson(true);
 ```
-### Result
+#### Result
 ```json
 // Unformatted JSON Result
-
-{/* Custom JSON Comment */"Name":".NET","Color":5,"Color2":"DarkGreen","MyRegisterDateTime":"09/01/1990 00:00:00","Time":"09:09:09","Array":["Item 1","Item 2","Item 3"],"Dictionary":{"Key 1":"Value 1","Key 2":"Value 2","Key 3":"Value 3"}}
+{"#__Comment0__#":"Custom JSON Comment","Name":".NET","Color":5,"Color2":"DarkGreen","MyRegisterDateTime":"09/01/1990 00:00:00","Time":"09:09:09","Array":["Item 1","Item 2","Item 3"],"Dictionary":{"Key 1":"Value 1","Key 2":"Value 2","Key 3":"Value 3"}}
 
 // Formatted JSON Result
-
 {
-	/* Custom JSON Comment */
-	"Name":".NET",
-	"Color":5,
-	"Color2":"DarkGreen",
-	"MyRegisterDateTime":"09/01/1990 00:00:00",
-	"Time":"09:09:09",
-	"Array":
+	"#__Comment0__#": "Custom JSON Comment",
+	"Name": ".NET",
+	"Color": 5,
+	"Color2": "DarkGreen",
+	"MyRegisterDateTime": "09/01/1990 00:00:00",
+	"Time": "09:09:09",
+	"Array": 
 	[
 		"Item 1",
 		"Item 2",
 		"Item 3"
 	],
-	"Dictionary":
+	"Dictionary": 
 	{
-		"Key 1":"Value 1",
-		"Key 2":"Value 2",
-		"Key 3":"Value 3"
+		"Key 1": "Value 1",
+		"Key 2": "Value 2",
+		"Key 3": "Value 3"
 	}
 }
 ```
 
-## JSON To Object
+### JSON To Object
 
 ```csharp
 // Object To JSON
@@ -82,11 +80,28 @@ Console.WriteLine(newObject.Dictionary["Key 2"]); // Value 2
 ## Attributes
 
 - **G9AttrJsonComment**
-  - This attribute enables you to write several comments (notes) for each item member in JSON.
-    - This attribute can use several times for an item member.
+  - This attribute enables you to write several comments (notes) for each member in JSON.
+    - Note 1: Indeed, JSON has no option for comments(notes). But this library considers two ways for that.
+      1. Standard mode, this JSON library considers a custom member that consists of a key and value like the usual member item ("__ #CommentN __#": "Comment Data") and saves the comment note there.
+      ```csharp
+      [G9AttrJsonComment("Custom JSON Comment")] public string Name = ".NET";
+      // {
+      //  "#__Comment0__#": "Custom JSON Comment",
+      // ...
+      ``` 
+      2. Nonstandard mode, this JSON library saves comments notes between two signs ("/* Comment Data  /*").
+      ```csharp
+      [G9AttrJsonComment("Custom JSON Comment", true)] public string Name = ".NET";
+      // {
+      //  /* Custom JSON Comment */
+      //  "Name": ".NET",
+      // ...
+      ``` 
+    - Note 2: This attribute can use several times for a member.
 - **G9AttrJsonStoreEnumAsString**
   - This attribute enables you to store an Enum object as a string value in JSON (By default, an Enum object storing as a number).
 - **G9AttrJsonCustomMemberName**
-  - This attribute enables you to choose a custom name for a member item for storing in JSON (At parsing time, the parser can recognize and pair the member item automatically).
+  - This attribute enables you to choose a custom name for a member for storing in JSON.
+    - Note: At parsing time, the parser can recognize and pair the member automatically.
 - **G9AttrJsonIgnoreMember**
-  - This attribute enables you to ignore an item member for storing in JSON.
+  - This attribute enables you to ignore a member for storing in JSON.

@@ -1,6 +1,9 @@
 using System;
+using System.Collections.Generic;
 using System.Net;
+using System.Threading.Tasks;
 using G9JSONHandler;
+using G9JSONHandler.Attributes;
 using G9JSONHandler_NUnitTest.DataTypeForTest;
 using NUnit.Framework;
 
@@ -8,10 +11,9 @@ namespace G9JSONHandler_NUnitTest
 {
     public class G9JSONHandlerNUnitTest
     {
+        private readonly G9DtTestObjectForParse testObjectForParsing = new();
         private string testJSONString_Formatted = string.Empty;
         private string testJSONString_Unformatted = string.Empty;
-
-        private readonly G9DtTestObjectForParse testObjectForParsing = new();
 
         [SetUp]
         public void Setup()
@@ -51,6 +53,10 @@ namespace G9JSONHandler_NUnitTest
             // Converting to JSON by formatted type
             testJSONString_Formatted = testObjectForParsing.G9ObjectToJson(true);
             Assert.False(string.IsNullOrEmpty(testJSONString_Formatted));
+
+            var nonstandardComment = "/* 1- This note comment is used just for tests! Nonstandard Type! */";
+            Assert.True(testJSONString_Unformatted.Contains(nonstandardComment) &&
+                        testJSONString_Formatted.Contains(nonstandardComment));
         }
 
         [Test]
@@ -108,6 +114,52 @@ namespace G9JSONHandler_NUnitTest
                         testObjectFormattedType.AAA[1].C && testObjectFormattedType.AAA[1].B == 2 &&
                         testObjectFormattedType.AAA[2].C == false && testObjectFormattedType.AAA[2].B == 3 &&
                         testObjectFormattedType.TestMultiLine == testObjectForParsing.TestMultiLine);
+        }
+
+        [Test]
+        [Order(3)]
+        public void TestSampleClass()
+        {
+            var testObject = new TestObject();
+            // Unformatted JSON
+            var unformattedJson = testObject.G9ObjectToJson();
+            // Formatted JSON
+            var formattedJson = testObject.G9ObjectToJson(true);
+
+            // Test
+            var newObject = unformattedJson.G9JsonToObject<TestObject>();
+            Assert.True(newObject.Name == testObject.Name);
+            Assert.True(newObject.Color == testObject.Color);
+            Assert.True(newObject.Array.Length == testObject.Array.Length);
+            Assert.True(newObject.Dictionary.Count == testObject.Dictionary.Count);
+            Assert.True(newObject.Dictionary["Key 2"] == testObject.Dictionary["Key 2"]);
+
+            newObject = formattedJson.G9JsonToObject<TestObject>();
+            Assert.True(newObject.Name == testObject.Name);
+            Assert.True(newObject.Color == testObject.Color);
+            Assert.True(newObject.Array.Length == testObject.Array.Length);
+            Assert.True(newObject.Dictionary.Count == testObject.Dictionary.Count);
+            Assert.True(newObject.Dictionary["Key 2"] == testObject.Dictionary["Key 2"]);
+        }
+
+        [Test]
+        [Order(4)]
+        public void TestSafeThreadShock()
+        {
+            var p = Parallel.For(0, 99_999, i =>
+            {
+                var testObject = new TestObject
+                {
+                    Name = $"Name {i}"
+                };
+                var unformattedJson = testObject.G9ObjectToJson();
+                var formattedJson = testObject.G9ObjectToJson(true);
+                var newObject = unformattedJson.G9JsonToObject<TestObject>();
+                var newObject2 = formattedJson.G9JsonToObject<TestObject>();
+                Assert.True(newObject.Name == testObject.Name);
+                Assert.True(newObject2.Name == testObject.Name);
+            });
+            Assert.True(p.IsCompleted);
         }
     }
 }
