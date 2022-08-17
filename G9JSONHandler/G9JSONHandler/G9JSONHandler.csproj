@@ -18,11 +18,11 @@
 		<NeutralLanguage>en</NeutralLanguage>
 		<PackageIcon>G9-Icon.png</PackageIcon>
 		<PackageIconUrl />
-		<AssemblyVersion>2.0.1.0</AssemblyVersion>
+		<AssemblyVersion>2.0.1.1</AssemblyVersion>
 		<PackageReleaseNotes>-- Implemented two comments (notes) system modes for JSON.
 -- Redesigned the formatted JSON style.
 -- Completed tests		</PackageReleaseNotes>
-		<FileVersion>2.0.1.0</FileVersion>
+		<FileVersion>2.0.1.1</FileVersion>
 
 		<EmbedAllSources>True</EmbedAllSources>
 		<!--<SymbolPackageFormat>snupkg</SymbolPackageFormat>-->
