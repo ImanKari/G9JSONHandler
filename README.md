@@ -1,7 +1,8 @@
-[![G9TM](https://raw.githubusercontent.com/ImanKari/G9JSONHandler/main/G9JSONHandler/Asset/G9JSONHandler.png)](https://github.com/ImanKari/G9JSONHandler) **G9JSONHandler**
+[![G9TM](https://raw.githubusercontent.com/ImanKari/G9JSONHandler/main/G9JSONHandler/Asset/G9JSONHandler.png)](http://www.g9tm.com/) **G9JSONHandler**
 
 [![NuGet version (G9JSONHandler)](https://img.shields.io/nuget/v/G9JSONHandler.svg?style=flat-square)](https://www.nuget.org/packages/G9JSONHandler/)
-[![Azure DevOps Pipeline Build Status](https://raw.githubusercontent.com/ImanKari/G9JSONHandler/main/G9JSONHandler/Asset/AzureDevOpsPipelineBuildStatus.png)](https://g9tm.visualstudio.com/G9JSONHandler/_apis/build/status/G9JSONHandler?branchName=main)
+[![Azure DevOps Pipeline Build Status](https://raw.githubusercontent.com/ImanKari/G9JSONHandler/main/G9JSONHandler/Asset/AzureDevOpsPipelineBuildStatus.png?raw=true)](https://g9tm.visualstudio.com/G9JSONHandler/_apis/build/status/G9JSONHandler?branchName=main)
+[![Github Repository](https://raw.githubusercontent.com/ImanKari/G9JSONHandler/main/G9JSONHandler/Asset/GitHub.png?raw=true)](https://github.com/ImanKari/G9JSONHandler)
 
 ## G9JSONHandler is a pretty small library for working with JSON.
 ### Sample Object
@@ -77,19 +78,20 @@ Console.WriteLine(newObject.Array.Length); // 3
 Console.WriteLine(newObject.Dictionary.Count); // 3
 Console.WriteLine(newObject.Dictionary["Key 2"]); // Value 2
 ```
-## Attributes
+### Attributes
 
 - **G9AttrJsonComment**
   - This attribute enables you to write several comments (notes) for each member in JSON.
-    - Note 1: Indeed, JSON has no option for comments(notes). But this library considers two ways for that.
-      1. Standard mode, this JSON library considers a custom member that consists of a key and value like the usual member item ("__ #CommentN __#": "Comment Data") and saves the comment note there.
+    - Note: Indeed, JSON has no option for comments (notes). But this library considers two ways for that.
+      1. **Standard mode** considers a custom member that consists of a key and value like the usual member item ("__ #CommentN __#": "Comment Data") and saves the comment note there.
       ```csharp
       [G9AttrJsonComment("Custom JSON Comment")] public string Name = ".NET";
       // {
       //  "#__Comment0__#": "Custom JSON Comment",
+      //  "Name": ".NET",
       // ...
       ``` 
-      2. Nonstandard mode, this JSON library saves comments notes between two signs ("/* Comment Data  /*").
+      2. **Nonstandard mode** saves comments notes between two signs ("/* Comment Data  /*") like JavaScript.
       ```csharp
       [G9AttrJsonComment("Custom JSON Comment", true)] public string Name = ".NET";
       // {
@@ -97,11 +99,11 @@ Console.WriteLine(newObject.Dictionary["Key 2"]); // Value 2
       //  "Name": ".NET",
       // ...
       ``` 
-    - Note 2: This attribute can use several times for a member.
+    - Note: This attribute can use several times for a member.
 - **G9AttrJsonStoreEnumAsString**
   - This attribute enables you to store an Enum object as a string value in JSON (By default, an Enum object storing as a number).
 - **G9AttrJsonCustomMemberName**
   - This attribute enables you to choose a custom name for a member for storing in JSON.
-    - Note: At parsing time, the parser can recognize and pair the member automatically.
+    - Note: At parsing time (JSON to object), the parser can recognize and pair the member automatically.
 - **G9AttrJsonIgnoreMember**
   - This attribute enables you to ignore a member for storing in JSON.

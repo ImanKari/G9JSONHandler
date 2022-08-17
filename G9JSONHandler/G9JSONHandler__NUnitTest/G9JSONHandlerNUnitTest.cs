@@ -1,9 +1,7 @@
 using System;
-using System.Collections.Generic;
 using System.Net;
 using System.Threading.Tasks;
 using G9JSONHandler;
-using G9JSONHandler.Attributes;
 using G9JSONHandler_NUnitTest.DataTypeForTest;
 using NUnit.Framework;
 

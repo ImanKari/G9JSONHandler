@@ -5,9 +5,9 @@ using System.Globalization;
 using System.Linq;
 using System.Runtime.Serialization;
 using System.Text;
+using G9AssemblyManagement;
 using G9AssemblyManagement.DataType;
 using G9AssemblyManagement.Enums;
-using G9AssemblyManagement.Helper;
 using G9AssemblyManagement.Interfaces;
 using G9JSONHandler.Attributes;
 
@@ -168,8 +168,9 @@ namespace G9JSONHandler
         {
             if (json == "null") return null;
 
-            if (type.IsEnum || (!type.G9IsEnumerableType() && type.G9IsTypeBuiltInDotNetType()))
-                return PrepareStringType(json.Trim('"')).G9SmartChangeType(type);
+            if (type.IsEnum || (!G9Assembly.TypeTools.IsEnumerableType(type) &&
+                                G9Assembly.TypeTools.IsTypeBuiltInDotNetType(type)))
+                return G9Assembly.TypeTools.SmartChangeType(PrepareStringType(json.Trim('"')), type);
 
             if (type.IsArray)
             {
@@ -379,12 +380,12 @@ namespace G9JSONHandler
 
             // Prepare Fields
             CreateDictionaryOfMembers(ref members,
-                instance.G9GetFieldsOfObject(G9EAccessModifier.Public,
+                G9Assembly.ObjectTools.GetFieldsOfObject(instance, G9EAccessModifier.Public,
                     s => !s.GetCustomAttributes(typeof(G9AttrJsonIgnoreMemberAttribute), true).Any()));
 
             // Prepare Properties
             CreateDictionaryOfMembers(ref members,
-                instance.G9GetPropertiesOfObject(G9EAccessModifier.Public,
+                G9Assembly.ObjectTools.GetPropertiesOfObject(instance, G9EAccessModifier.Public,
                     s => s.CanWrite && !s.GetCustomAttributes(typeof(G9AttrJsonIgnoreMemberAttribute), true).Any()));
 
             for (var i = 0; i < elems.Count; i += 2)

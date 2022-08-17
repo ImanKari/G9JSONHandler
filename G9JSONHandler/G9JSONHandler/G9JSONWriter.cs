@@ -3,8 +3,8 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using G9AssemblyManagement;
 using G9AssemblyManagement.Enums;
-using G9AssemblyManagement.Helper;
 using G9JSONHandler.Attributes;
 
 namespace G9JSONHandler
@@ -53,9 +53,10 @@ namespace G9JSONHandler
 
             var type = objectItem.GetType();
 
-            if (!type.IsArray && !type.IsGenericType && (type.IsEnum || type.G9IsTypeBuiltInDotNetType()))
+            if (!type.IsArray && !type.IsGenericType &&
+                (type.IsEnum || G9Assembly.TypeTools.IsTypeBuiltInDotNetType(type)))
                 ParseDotNetBuiltInTypes(stringBuilder, objectItem, type);
-            else if (type.IsArray || type.IsGenericType || type.G9IsEnumerableType())
+            else if (type.IsArray || type.IsGenericType || G9Assembly.TypeTools.IsEnumerableType(type))
                 ParseCollectionTypes(stringBuilder, objectItem, type, unformatted, ref tabsNumber);
             else
                 ParseCustomObjectTypes(stringBuilder, objectItem, type, unformatted, ref tabsNumber);
@@ -116,12 +117,13 @@ namespace G9JSONHandler
                 case TypeCode.Decimal:
                 case TypeCode.Boolean:
                     if (type.IsEnum)
-                        stringBuilder.Append(objectItem.G9SmartChangeType(Enum.GetUnderlyingType(type)));
+                        stringBuilder.Append(
+                            G9Assembly.TypeTools.SmartChangeType(objectItem, Enum.GetUnderlyingType(type)));
                     else
-                        stringBuilder.Append(objectItem.G9SmartChangeType<string>());
+                        stringBuilder.Append(G9Assembly.TypeTools.SmartChangeType<string>(objectItem));
                     break;
                 default:
-                    stringBuilder.Append($"\"{objectItem.G9SmartChangeType<string>()}\"");
+                    stringBuilder.Append($"\"{G9Assembly.TypeTools.SmartChangeType<string>(objectItem)}\"");
                     break;
             }
         }
@@ -223,7 +225,7 @@ namespace G9JSONHandler
                     : $"{{\n{new string('\t', ++tabsNumber)}");
 
             var isFirst = true;
-            var fieldInfos = objectItem.G9GetFieldsOfObject(G9EAccessModifier.Public,
+            var fieldInfos = G9Assembly.ObjectTools.GetFieldsOfObject(objectItem, G9EAccessModifier.Public,
                 s => !s.GetCustomAttributes(typeof(G9AttrJsonIgnoreMemberAttribute), true).Any());
             foreach (var m in fieldInfos)
             {
@@ -252,7 +254,7 @@ namespace G9JSONHandler
                     ParseObjectMembersToJson(stringBuilder, value, unformatted, ref tabsNumber);
             }
 
-            var propertyInfo = objectItem.G9GetPropertiesOfObject(G9EAccessModifier.Public,
+            var propertyInfo = G9Assembly.ObjectTools.GetPropertiesOfObject(objectItem, G9EAccessModifier.Public,
                 s => s.CanRead && !s.GetCustomAttributes(typeof(G9AttrJsonIgnoreMemberAttribute), true).Any());
 
             foreach (var m in propertyInfo)

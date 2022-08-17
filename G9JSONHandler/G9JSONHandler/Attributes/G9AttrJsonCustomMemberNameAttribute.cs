@@ -7,10 +7,8 @@ namespace G9JSONHandler.Attributes
     /// </summary>
     [AttributeUsage(AttributeTargets.Property | AttributeTargets.Field,
         // ReSharper disable once RedundantAttributeUsageProperty
-        AllowMultiple = false,
-        // ReSharper disable once RedundantAttributeUsageProperty
-        Inherited = false)]
-    public sealed class G9AttrJsonCustomMemberNameAttribute : Attribute
+        AllowMultiple = false)]
+    public class G9AttrJsonCustomMemberNameAttribute : Attribute
     {
         public G9AttrJsonCustomMemberNameAttribute(string customName)
         {

@@ -7,9 +7,7 @@ namespace G9JSONHandler.Attributes
     /// </summary>
     [AttributeUsage(AttributeTargets.Property | AttributeTargets.Field,
         // ReSharper disable once RedundantAttributeUsageProperty
-        AllowMultiple = true,
-        // ReSharper disable once RedundantAttributeUsageProperty
-        Inherited = false)]
+        AllowMultiple = true)]
     public class G9AttrJsonCommentAttribute : Attribute
     {
         /// <summary>

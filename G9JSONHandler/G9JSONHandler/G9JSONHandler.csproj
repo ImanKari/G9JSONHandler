@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
 	<PropertyGroup>
-		<TargetFrameworks>net35;net40;net45;net451;net452;net46;netstandard2.0;netstandard2.1</TargetFrameworks>
+		<TargetFrameworks>net35;net40;net45;netstandard2.0;netstandard2.1</TargetFrameworks>
 		<GeneratePackageOnBuild>true</GeneratePackageOnBuild>
 		<PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
 		<Version>2.0.1.0</Version>
@@ -24,10 +24,9 @@
 -- Completed tests		</PackageReleaseNotes>
 		<FileVersion>2.0.1.0</FileVersion>
 
-		<DebugType>Embedded</DebugType>
 		<EmbedAllSources>True</EmbedAllSources>
-		<!-- Include symbol files (*.pdb) in the built .nupkg -->
-
+		<!--<SymbolPackageFormat>snupkg</SymbolPackageFormat>-->
+		<AllowedOutputExtensionsInPackageBuildOutputFolder>$(AllowedOutputExtensionsInPackageBuildOutputFolder);.pdb</AllowedOutputExtensionsInPackageBuildOutputFolder>
 		<PublishRepositoryUrl>true</PublishRepositoryUrl>
 		<IncludeSymbols>true</IncludeSymbols>
 		<IncludeSource>true</IncludeSource>
@@ -35,11 +34,8 @@
 		<EmbedUntrackedSources>true</EmbedUntrackedSources>
 		<ProduceReferenceAssembly>true</ProduceReferenceAssembly>
 		<PackageReadmeFile>README.md</PackageReadmeFile>
+		<ContinuousIntegrationBuild>true</ContinuousIntegrationBuild>
 	</PropertyGroup>
-
-	<ItemGroup>
-		<PackageReference Include="G9AssemblyManagement" Version="1.2.0" PrivateAssets="All" />
-	</ItemGroup>
 
 	<ItemGroup>
 		<None Include="..\..\README.md" Pack="true" PackagePath="" />
@@ -57,14 +53,15 @@
 	</ItemGroup>
 
 	<ItemGroup>
-		<PackageReference Include="G9AssemblyManagement" Version="1.2.0" />
-	</ItemGroup>
-
-	<ItemGroup>
 		<Folder Include="build\" />
 	</ItemGroup>
 
-	<PropertyGroup Condition="'$(TF_BUILD)' == 'true'">
-		<ContinuousIntegrationBuild>true</ContinuousIntegrationBuild>
-	</PropertyGroup>
+	<ItemGroup>
+	  <PackageReference Include="G9AssemblyManagement" Version="1.3.3.1" />
+	</ItemGroup>
+
+	<Target Name="PostBuild" AfterTargets="PostBuildEvent">
+	  <Exec Command="Set &quot;NugetLocalTargetPath=I:\LocalNugetPackages\&quot;&#xD;&#xA;if exist &quot;%25NugetLocalTargetPath%25&quot; (&#xD;&#xA;  xcopy &quot;bin\$(ConfigurationName)\*.nupkg&quot; &quot;%25NugetLocalTargetPath%25&quot; /C /Y&#xD;&#xA;) else (&#xD;&#xA;  echo 'Post-build event command line' : warning -9: 'Nuget target path not exist!'&#xD;&#xA;)" />
+	</Target>
+
 </Project>
