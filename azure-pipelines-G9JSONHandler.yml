@@ -31,6 +31,9 @@ steps:
 
 - task: VSTest@2
   inputs:
+    testSelector: testAssemblies
+    testAssemblyVer2: 'G9JSONHandler_NUnitTest\bin\Release\net5.0\G9JSONHandler_NUnitTest.UnitTests.dll'
+    testFiltercriteria: FullyQualifiedName~G9JSONHandler_NUnitTest.UnitTests
     platform: '$(buildPlatform)'
     configuration: '$(buildConfiguration)'
 
