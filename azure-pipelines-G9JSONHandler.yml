@@ -36,6 +36,13 @@ steps:
     testFiltercriteria: FullyQualifiedName~G9JSONHandler_NUnitTest.UnitTests
     platform: '$(buildPlatform)'
     configuration: '$(buildConfiguration)'
+    
+- task: VSBuild@1
+  inputs:
+    solution: 'G9JSONHandler/G9JSONHandler.sln'
+    msbuildArgs: '/p:DeployOnBuild=true /p:ContinuousIntegrationBuild=true /p:WebPublishMethod=Package /p:PackageAsSingleFile=true /p:SkipInvalidConfigurations=true /p:PackageLocation="$(build.artifactStagingDirectory)"'
+    platform: '$(buildPlatform)'
+    configuration: '$(buildConfiguration)'
 
 - task: DotNetCoreCLI@2
   displayName: "Publish G9JSONHandler Library nuget packages to nuget.org"
