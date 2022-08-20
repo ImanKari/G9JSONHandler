@@ -11,7 +11,10 @@ namespace G9JSONHandler_NUnitTest.DataTypeForTest
             ";
 
         
+#pragma warning disable CS0414
+        // ReSharper disable once InconsistentNaming
         private string A1 = "G9TM1";
+#pragma warning restore CS0414
 
         [G9AttrJsonComment("1- This note comment is used just for tests! Nonstandard Type!", true)]
         public string A2 = "G9TM2";

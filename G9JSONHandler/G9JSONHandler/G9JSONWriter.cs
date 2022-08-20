@@ -6,6 +6,7 @@ using System.Text;
 using G9AssemblyManagement;
 using G9AssemblyManagement.Enums;
 using G9JSONHandler.Attributes;
+using G9JSONHandler.Enum;
 
 namespace G9JSONHandler
 {
@@ -118,7 +119,7 @@ namespace G9JSONHandler
                 case TypeCode.Boolean:
                     if (type.IsEnum)
                         stringBuilder.Append(
-                            G9Assembly.TypeTools.SmartChangeType(objectItem, Enum.GetUnderlyingType(type)));
+                            G9Assembly.TypeTools.SmartChangeType(objectItem, System.Enum.GetUnderlyingType(type)));
                     else
                         stringBuilder.Append(G9Assembly.TypeTools.SmartChangeType<string>(objectItem));
                     break;
@@ -225,7 +226,7 @@ namespace G9JSONHandler
                     : $"{{\n{new string('\t', ++tabsNumber)}");
 
             var isFirst = true;
-            var fieldInfos = G9Assembly.ObjectTools.GetFieldsOfObject(objectItem, G9EAccessModifier.Public,
+            var fieldInfos = G9Assembly.ObjectAndReflectionTools.GetFieldsOfObject(objectItem, G9EAccessModifier.Public,
                 s => !s.GetCustomAttributes(typeof(G9AttrJsonIgnoreMemberAttribute), true).Any());
             foreach (var m in fieldInfos)
             {
@@ -247,14 +248,23 @@ namespace G9JSONHandler
                 var nameAttr = m.GetCustomAttributes<G9AttrJsonCustomMemberNameAttribute>(true);
                 stringBuilder.Append(nameAttr.Any() ? nameAttr[0].Name : m.Name);
                 stringBuilder.Append(_separator);
-                if (m.FieldInfo.FieldType.IsEnum &&
-                    m.GetCustomAttributes<G9AttrJsonStoreEnumAsStringAttribute>(true).Any())
+
+                // Check custom parser for a member
+                var customParser = m.GetCustomAttributes<G9AttrJsonCustomMemberParsingProcessAttribute>(true)
+                    .FirstOrDefault();
+                if (customParser != null && customParser.ParserType != G9ECustomParserType.StringToObject)
+                    ParseObjectMembersToJson(stringBuilder,
+                        customParser.ObjectToStringMethod.CallMethodWithResult<string>(value, m), unformatted,
+                        ref tabsNumber);
+                else if (m.FieldInfo.FieldType.IsEnum &&
+                         m.GetCustomAttributes<G9AttrJsonStoreEnumAsStringAttribute>(true).Any())
                     ParseObjectMembersToJson(stringBuilder, value.ToString(), unformatted, ref tabsNumber);
                 else
                     ParseObjectMembersToJson(stringBuilder, value, unformatted, ref tabsNumber);
             }
 
-            var propertyInfo = G9Assembly.ObjectTools.GetPropertiesOfObject(objectItem, G9EAccessModifier.Public,
+            var propertyInfo = G9Assembly.ObjectAndReflectionTools.GetPropertiesOfObject(objectItem,
+                G9EAccessModifier.Public,
                 s => s.CanRead && !s.GetCustomAttributes(typeof(G9AttrJsonIgnoreMemberAttribute), true).Any());
 
             foreach (var m in propertyInfo)
@@ -277,8 +287,15 @@ namespace G9JSONHandler
                 var nameAttr = m.GetCustomAttributes<G9AttrJsonCustomMemberNameAttribute>(true);
                 stringBuilder.Append(nameAttr.Any() ? nameAttr[0].Name : m.Name);
                 stringBuilder.Append(_separator);
-                if (m.PropertyInfo.PropertyType.IsEnum &&
-                    m.GetCustomAttributes<G9AttrJsonStoreEnumAsStringAttribute>(true).Any())
+                // Check custom parser for a member
+                var customParser = m.GetCustomAttributes<G9AttrJsonCustomMemberParsingProcessAttribute>(true)
+                    .FirstOrDefault();
+                if (customParser != null && customParser.ParserType != G9ECustomParserType.StringToObject)
+                    ParseObjectMembersToJson(stringBuilder,
+                        customParser.ObjectToStringMethod.CallMethodWithResult<string>(value, m), unformatted,
+                        ref tabsNumber);
+                else if (m.PropertyInfo.PropertyType.IsEnum &&
+                         m.GetCustomAttributes<G9AttrJsonStoreEnumAsStringAttribute>(true).Any())
                     ParseObjectMembersToJson(stringBuilder, value.ToString(), unformatted, ref tabsNumber);
                 else
                     ParseObjectMembersToJson(stringBuilder, value, unformatted, ref tabsNumber);

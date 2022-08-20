@@ -159,5 +159,59 @@ namespace G9JSONHandler_NUnitTest
             });
             Assert.True(p.IsCompleted);
         }
+
+        [Test]
+        [Order(5)]
+        public void TestCustomParsing()
+        {
+            void TestCustomParser()
+            {
+                // Create an object that consists of custom parsing process
+                var objectWithCustomParser = new G9DtTestForCustomParsingProcess();
+                // Custom parsing process calls automatically in parsing
+                var stringJson = objectWithCustomParser.G9ObjectToJson(true);
+                Assert.True(!string.IsNullOrEmpty(stringJson));
+
+                // Test custom parsing process for json to object (The custom values is set in custom parsing)
+                var objectFromJson = stringJson.G9JsonToObject<G9DtTestForCustomParsingProcess>();
+                Assert.True(objectFromJson is { TestObject1: { }, TestObject2: { }, TestObject3: { } } &&
+                            objectFromJson.TestObject1.Name == objectWithCustomParser.TestObject1.Name + "Okay" &&
+                            objectFromJson.TestObject2.Time ==
+                            objectWithCustomParser.TestObject2.Time.Add(new TimeSpan(0, 9, 0)) &&
+                            objectFromJson.TestObject3.Color == objectWithCustomParser.TestObject3.Color2 &&
+                            objectFromJson.TestObject3.Color2 == objectWithCustomParser.TestObject3.Color2);
+
+                // Test custom parsing process just for json to object
+                var objectWithCustomParserJsonToObject = new G9DtTestForCustomParsingProcessObjectToString();
+                stringJson = objectWithCustomParserJsonToObject.G9ObjectToJson(true);
+
+                // Test custom parsing process just for object to json
+                var objectFromJsonObjectToString =
+                    stringJson.G9JsonToObject<G9DtTestForCustomParsingProcessJsonToObject>();
+                Assert.True(objectFromJsonObjectToString is { TestObject1: { }, TestObject2: { }, TestObject3: { } } &&
+                            objectFromJsonObjectToString.TestObject1.Name ==
+                            objectWithCustomParser.TestObject1.Name + "Okay" &&
+                            objectFromJsonObjectToString.TestObject2.Time ==
+                            objectWithCustomParser.TestObject2.Time.Add(new TimeSpan(0, 9, 0)) &&
+                            objectFromJsonObjectToString.TestObject3.Color ==
+                            objectWithCustomParser.TestObject3.Color2 &&
+                            objectFromJsonObjectToString.TestObject3.Color2 ==
+                            objectWithCustomParser.TestObject3.Color2);
+            }
+
+            // Normal test
+            TestCustomParser();
+
+            // Thread test
+            Parallel.For(0, 99_999, _ => { TestCustomParser(); });
+
+            var testObject = new CustomObject();
+            var jsonTestObject = testObject.G9ObjectToJson(true);
+            var parsedTestObject = jsonTestObject.G9JsonToObject<CustomObject>();
+
+            Assert.True(parsedTestObject.CustomChild.Number1 == testObject.CustomChild.Number1 &&
+                        parsedTestObject.CustomChild.Number2 == testObject.CustomChild.Number2 &&
+                        parsedTestObject.CustomChild.Number3 == testObject.CustomChild.Number3);
+        }
     }
 }

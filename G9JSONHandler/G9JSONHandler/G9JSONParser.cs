@@ -6,10 +6,10 @@ using System.Linq;
 using System.Runtime.Serialization;
 using System.Text;
 using G9AssemblyManagement;
-using G9AssemblyManagement.DataType;
 using G9AssemblyManagement.Enums;
 using G9AssemblyManagement.Interfaces;
 using G9JSONHandler.Attributes;
+using G9JSONHandler.Enum;
 
 namespace G9JSONHandler
 {
@@ -350,8 +350,8 @@ namespace G9JSONHandler
         /// <param name="dic">Reference dictionary for adding members</param>
         /// <param name="members">Object members</param>
         private static void CreateDictionaryOfMembers<TType>(
-            ref Dictionary<string, G9IObjectMember> dic, IEnumerable<TType> members)
-            where TType : G9IObjectMember
+            ref Dictionary<string, G9IMember> dic, IEnumerable<TType> members)
+            where TType : G9IMember
         {
             foreach (var m in members)
             {
@@ -376,16 +376,16 @@ namespace G9JSONHandler
                 return instance;
 
 
-            var members = new Dictionary<string, G9IObjectMember>(StringComparer.OrdinalIgnoreCase);
+            var members = new Dictionary<string, G9IMember>(StringComparer.OrdinalIgnoreCase);
 
             // Prepare Fields
             CreateDictionaryOfMembers(ref members,
-                G9Assembly.ObjectTools.GetFieldsOfObject(instance, G9EAccessModifier.Public,
+                G9Assembly.ObjectAndReflectionTools.GetFieldsOfObject(instance, G9EAccessModifier.Public,
                     s => !s.GetCustomAttributes(typeof(G9AttrJsonIgnoreMemberAttribute), true).Any()));
 
             // Prepare Properties
             CreateDictionaryOfMembers(ref members,
-                G9Assembly.ObjectTools.GetPropertiesOfObject(instance, G9EAccessModifier.Public,
+                G9Assembly.ObjectAndReflectionTools.GetPropertiesOfObject(instance, G9EAccessModifier.Public,
                     s => s.CanWrite && !s.GetCustomAttributes(typeof(G9AttrJsonIgnoreMemberAttribute), true).Any()));
 
             for (var i = 0; i < elems.Count; i += 2)
@@ -396,15 +396,15 @@ namespace G9JSONHandler
                 var value = elems[i + 1];
 
                 if (!members.TryGetValue(key, out var memberInfo)) continue;
-                switch (memberInfo)
-                {
-                    case G9DtFields fieldInfo:
-                        fieldInfo.SetValue(ParsePureJsonData(fieldInfo.FieldInfo.FieldType, value));
-                        break;
-                    case G9DtProperties propertyInfo:
-                        propertyInfo.SetValue(ParsePureJsonData(propertyInfo.PropertyInfo.PropertyType, value));
-                        break;
-                }
+
+                // Check custom parser for a member
+                var customParser = memberInfo.GetCustomAttributes<G9AttrJsonCustomMemberParsingProcessAttribute>(true)
+                    .FirstOrDefault();
+                if (customParser != null && customParser.ParserType != G9ECustomParserType.ObjectToJson)
+                    memberInfo.SetValue(
+                        customParser.StringToObjectMethod.CallMethodWithResult<object>(value.Trim('"'), memberInfo));
+                else
+                    memberInfo.SetValue(ParsePureJsonData(memberInfo.MemberType, value));
             }
 
             return instance;
