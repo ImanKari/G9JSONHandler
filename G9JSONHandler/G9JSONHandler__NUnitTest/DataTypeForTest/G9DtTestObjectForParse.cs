@@ -17,7 +17,7 @@ namespace G9JSONHandler_NUnitTest.DataTypeForTest
 #pragma warning restore CS0414
 
         [G9AttrJsonComment("1- This note comment is used just for tests! Nonstandard Type!", true)]
-        public string A2 = "G9TM2";
+        public string A2 = "\"G9\"TM2\"";
 
         [G9AttrJsonComment("Test object array!")]
         public G9DtSmallStructure[] AAA = new[]
@@ -33,7 +33,7 @@ namespace G9JSONHandler_NUnitTest.DataTypeForTest
         [G9AttrJsonComment("3- This note comment is used just for tests!")]
         public G9DtDotNetBuiltInTypes DotNetBuiltInTypes = new();
 
-        [G9AttrJsonStoreEnumAsString] [G9AttrJsonCustomMemberName("ChangeToCustomName")]
+        [G9AttrJsonStoreEnumAsString] [G9AttrJsonMemberCustomName("ChangeToCustomName")]
         public Gender Gender = Gender.Unknown;
 
         [G9AttrJsonIgnoreMember] public string TestIgnoreCase = "Okay";

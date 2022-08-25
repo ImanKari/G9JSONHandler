@@ -26,11 +26,11 @@ namespace G9JSONHandler_NUnitTest.DataTypeForTest
         [G9AttrJsonComment("A Dictionary For Test")] public Dictionary<string, string> TestDictionary = new()
         {
             { "Key 1", "Value 1" }, { "Key 2", "Value 2" }, { "Key 3", "Value 3" }, { "Key 4", "Value 4" },
-            { "Key 5", "Value 5" }, { "Key 6", "Value 6" }, { "Key 7", "Value 7" }, { "Key 8", "Value 8" },
+            { "Key 5", "\"Value 5" }, { "Key 6", "\"Value 6\"" }, { "Key 7", "Value 7\"" }, { "Key 8", "\"Value 8" },
             { "Key 9", "Value 9" }
         };
 
-        public string FullName { set; get; } = "Iman Kari";
+        public string FullName { set; get; } = "\"Iman\"Kari\"";
 
         public int Age { set; get; } = 32;
     }

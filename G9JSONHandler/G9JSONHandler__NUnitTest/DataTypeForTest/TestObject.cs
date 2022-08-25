@@ -14,7 +14,7 @@ namespace G9JSONHandler_NUnitTest.DataTypeForTest
         public ConsoleColor Color = ConsoleColor.DarkMagenta;
         [G9AttrJsonStoreEnumAsString]
         public ConsoleColor Color2 = ConsoleColor.DarkGreen;
-        [G9AttrJsonCustomMemberName("MyRegisterDateTime")]
+        [G9AttrJsonMemberCustomName("MyRegisterDateTime")]
         public DateTime RegisterDateTime = new(1990, 9, 1);
         public TimeSpan Time = new(9, 9, 9);
         public string[] Array = { "Item 1", "Item 2", "Item 3" };

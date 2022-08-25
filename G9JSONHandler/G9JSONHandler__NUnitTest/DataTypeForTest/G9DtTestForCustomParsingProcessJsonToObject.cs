@@ -46,21 +46,21 @@ namespace G9JSONHandler_NUnitTest.DataTypeForTest
         /// <summary>
         ///     Test with standard object and standard methods
         /// </summary>
-        [G9AttrJsonCustomMemberParsingProcess(true, typeof(G9CCustomParserJsonToObject1),
+        [G9AttrJsonMemberCustomParser(true, typeof(G9CCustomParserJsonToObject1),
             nameof(G9CCustomParserJsonToObject1.StringToObject))]
         public TestObject TestObject1 = new();
 
         /// <summary>
         ///     Test with standard object and static methods
         /// </summary>
-        [G9AttrJsonCustomMemberParsingProcess(true, typeof(G9CCustomParserJsonToObject2),
+        [G9AttrJsonMemberCustomParser(true, typeof(G9CCustomParserJsonToObject2),
             nameof(G9CCustomParserJsonToObject2.StringToObject))]
         public TestObject TestObject2 = new();
 
         /// <summary>
         ///     Test with static object and static methods
         /// </summary>
-        [G9AttrJsonCustomMemberParsingProcess(true, typeof(G9CCustomParserJsonToObject3),
+        [G9AttrJsonMemberCustomParser(true, typeof(G9CCustomParserJsonToObject3),
             nameof(G9CCustomParserJsonToObject3.StringToObject))]
         public TestObject TestObject3 = new();
     }

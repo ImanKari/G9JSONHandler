@@ -15,7 +15,7 @@ namespace G9JSONHandler.Attributes
     [AttributeUsage(AttributeTargets.Property | AttributeTargets.Field,
         // ReSharper disable once RedundantAttributeUsageProperty
         AllowMultiple = false)]
-    public class G9AttrJsonCustomMemberParsingProcessAttribute : Attribute
+    public class G9AttrJsonMemberCustomParserAttribute : Attribute
     {
         /// <summary>
         ///     Constructor for initializing parser methods.
@@ -49,18 +49,18 @@ namespace G9JSONHandler.Attributes
         ///     first parameter is 'object' and the second one is 'G9IMemberGetter'); in continuation, it must return a string
         ///     value that is parsed from the object value.
         /// </param>
-        public G9AttrJsonCustomMemberParsingProcessAttribute(bool isStringToObjectMethod,
+        public G9AttrJsonMemberCustomParserAttribute(bool isStringToObjectMethod,
             Type targetObjectType, string methodName)
         {
             if (targetObjectType == null)
                 throw new ArgumentNullException(
                     nameof(targetObjectType),
-                    $"The \"{nameof(targetObjectType)}\" used for the \"{nameof(G9AttrJsonCustomMemberParsingProcessAttribute)}\" argument can't be null.");
+                    $"The \"{nameof(targetObjectType)}\" used for the \"{nameof(G9AttrJsonMemberCustomParserAttribute)}\" argument can't be null.");
 
             if (string.IsNullOrEmpty(methodName))
                 throw new ArgumentNullException(
                     nameof(methodName),
-                    $"The \"{nameof(methodName)}\" used for the \"{nameof(G9AttrJsonCustomMemberParsingProcessAttribute)}\" argument can't be null.");
+                    $"The \"{nameof(methodName)}\" used for the \"{nameof(G9AttrJsonMemberCustomParserAttribute)}\" argument can't be null.");
 
             PrepareParserMethod(isStringToObjectMethod, targetObjectType, methodName);
 
@@ -89,23 +89,23 @@ namespace G9JSONHandler.Attributes
         ///     The specified method must have two parameters (the first parameter is 'object' and the second one is
         ///     'G9IMemberGetter'); in continuation, it must return a string value that is parsed from the object value.
         /// </param>
-        public G9AttrJsonCustomMemberParsingProcessAttribute(
+        public G9AttrJsonMemberCustomParserAttribute(
             Type targetObjectType, string stringToObjectMethodName, string objectToStringMethodName)
         {
             if (targetObjectType == null)
                 throw new ArgumentNullException(
                     nameof(targetObjectType),
-                    $"The \"{nameof(targetObjectType)}\" used for the \"{nameof(G9AttrJsonCustomMemberParsingProcessAttribute)}\" argument can't be null.");
+                    $"The \"{nameof(targetObjectType)}\" used for the \"{nameof(G9AttrJsonMemberCustomParserAttribute)}\" argument can't be null.");
 
             if (string.IsNullOrEmpty(stringToObjectMethodName))
                 throw new ArgumentNullException(
                     nameof(stringToObjectMethodName),
-                    $"The \"{nameof(stringToObjectMethodName)}\" used for the \"{nameof(G9AttrJsonCustomMemberParsingProcessAttribute)}\" argument can't be null.");
+                    $"The \"{nameof(stringToObjectMethodName)}\" used for the \"{nameof(G9AttrJsonMemberCustomParserAttribute)}\" argument can't be null.");
 
             if (string.IsNullOrEmpty(objectToStringMethodName))
                 throw new ArgumentNullException(
                     nameof(objectToStringMethodName),
-                    $"The \"{nameof(objectToStringMethodName)}\" used for the \"{nameof(G9AttrJsonCustomMemberParsingProcessAttribute)}\" argument can't be null.");
+                    $"The \"{nameof(objectToStringMethodName)}\" used for the \"{nameof(G9AttrJsonMemberCustomParserAttribute)}\" argument can't be null.");
 
             PrepareParserMethod(true, targetObjectType, stringToObjectMethodName);
             PrepareParserMethod(false, targetObjectType, objectToStringMethodName);
@@ -139,30 +139,30 @@ namespace G9JSONHandler.Attributes
         ///     The specified method must have two parameters (the first parameter is 'object' and the second one is
         ///     'G9IMemberGetter'); in continuation, it must return a string value that is parsed from the object value.
         /// </param>
-        public G9AttrJsonCustomMemberParsingProcessAttribute(
+        public G9AttrJsonMemberCustomParserAttribute(
             Type targetObjectTypeForStringToObjectMethod, string stringToObjectMethodName,
             Type targetObjectTypeForObjectToStringMethod, string objectToStringMethodName)
         {
             if (targetObjectTypeForStringToObjectMethod == null)
                 throw new ArgumentNullException(
                     nameof(targetObjectTypeForStringToObjectMethod),
-                    $"The \"{nameof(targetObjectTypeForStringToObjectMethod)}\" used for the \"{nameof(G9AttrJsonCustomMemberParsingProcessAttribute)}\" argument can't be null.");
+                    $"The \"{nameof(targetObjectTypeForStringToObjectMethod)}\" used for the \"{nameof(G9AttrJsonMemberCustomParserAttribute)}\" argument can't be null.");
 
             if (string.IsNullOrEmpty(stringToObjectMethodName))
                 throw new ArgumentNullException(
                     nameof(stringToObjectMethodName),
-                    $"The \"{nameof(stringToObjectMethodName)}\" used for the \"{nameof(G9AttrJsonCustomMemberParsingProcessAttribute)}\" argument can't be null.");
+                    $"The \"{nameof(stringToObjectMethodName)}\" used for the \"{nameof(G9AttrJsonMemberCustomParserAttribute)}\" argument can't be null.");
 
             if (targetObjectTypeForObjectToStringMethod == null)
                 throw new ArgumentNullException(
                     nameof(targetObjectTypeForObjectToStringMethod),
-                    $"The \"{nameof(targetObjectTypeForObjectToStringMethod)}\" used for the \"{nameof(G9AttrJsonCustomMemberParsingProcessAttribute)}\" argument can't be null.");
+                    $"The \"{nameof(targetObjectTypeForObjectToStringMethod)}\" used for the \"{nameof(G9AttrJsonMemberCustomParserAttribute)}\" argument can't be null.");
 
             if (string.IsNullOrEmpty(objectToStringMethodName))
 
                 throw new ArgumentNullException(
                     nameof(objectToStringMethodName),
-                    $"The \"{nameof(objectToStringMethodName)}\" used for the \"{nameof(G9AttrJsonCustomMemberParsingProcessAttribute)}\" argument can't be null.");
+                    $"The \"{nameof(objectToStringMethodName)}\" used for the \"{nameof(G9AttrJsonMemberCustomParserAttribute)}\" argument can't be null.");
 
             PrepareParserMethod(true, targetObjectTypeForStringToObjectMethod, stringToObjectMethodName);
             PrepareParserMethod(false, targetObjectTypeForObjectToStringMethod, objectToStringMethodName);

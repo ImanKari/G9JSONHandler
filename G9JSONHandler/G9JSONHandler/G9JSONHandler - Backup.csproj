@@ -19,11 +19,9 @@
 		<PackageIcon>G9-Icon.png</PackageIcon>
 		<PackageIconUrl />
 		<AssemblyVersion>2.0.3.1</AssemblyVersion>
-		<PackageReleaseNotes>-- Implemented G9AttrJsonMemberEncryptionAttribute.
--- Implemented ignore mismatching option on parsing.
--- Redesigned the structure of parsing (Performance).
+		<PackageReleaseNotes>-- Implemented G9AttrJsonMemberCustomParserAttribute.
 -- Completed tests</PackageReleaseNotes>
-		<FileVersion>2.0.3.1</FileVersion>
+		<FileVersion>2.0.3.0</FileVersion>
 
 		<EmbedAllSources>True</EmbedAllSources>
 		<!--<SymbolPackageFormat>snupkg</SymbolPackageFormat>-->
@@ -66,7 +64,7 @@
 	</ItemGroup>
 
 	<ItemGroup>
-	  <PackageReference Include="G9AssemblyManagement" Version="1.4.2.2" />
+	  <PackageReference Include="G9AssemblyManagement" Version="1.4.2.1" />
 	</ItemGroup>
 
 	<Target Name="PostBuild" AfterTargets="PostBuildEvent">

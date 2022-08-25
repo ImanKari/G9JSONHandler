@@ -42,7 +42,7 @@ namespace G9JSONHandler_NUnitTest.DataTypeForTest
         // This attribute has several overloads.
         // The popular way (used below), for use, must specify the type of custom parse class in the first parameter,
         // the second parameter specifies the string to object method name, and the last one specifies the object to string method name.
-        [G9AttrJsonCustomMemberParsingProcess(typeof(CustomParser), nameof(CustomParser.StringToObject),
+        [G9AttrJsonMemberCustomParser(typeof(CustomParser), nameof(CustomParser.StringToObject),
             nameof(CustomParser.ObjectToString))]
         public CustomChildObject CustomChild = new();
     }

@@ -3,7 +3,6 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
-using System.Runtime.Serialization;
 using System.Text;
 using G9AssemblyManagement;
 using G9AssemblyManagement.Enums;
@@ -23,15 +22,27 @@ namespace G9JSONHandler
         [ThreadStatic] private static StringBuilder _stringBuilder;
 
         /// <summary>
+        ///     Specifies that if in the parsing process a mismatch occurs, the exception (mismatch) on the member that has it must
+        ///     be ignored or not.
+        /// </summary>
+        [ThreadStatic] private static bool _ignoreMismatching;
+
+        /// <summary>
         ///     Method to convert a JSON string to an Object.
         /// </summary>
         /// <typeparam name="T">Specifies the type of object.</typeparam>
         /// <param name="json">Specifies JSON string for conversion.</param>
+        /// <param name="ignoreMismatching">
+        ///     Specifies that if in the parsing process a mismatch occurs, the exception (mismatch) on
+        ///     the member that has it must be ignored or not.
+        /// </param>
         /// <returns>An object that is converted by JSON string.</returns>
-        public static T G9JsonToObject<T>(this string json)
+        public static T G9JsonToObject<T>(this string json, bool ignoreMismatching = false)
         {
             if (_stringBuilder == null) _stringBuilder = new StringBuilder();
             if (_splitArrayPool == null) _splitArrayPool = new Stack<List<string>>();
+
+            _ignoreMismatching = ignoreMismatching;
 
             //Remove all whitespace not within strings to make parsing simpler
             _stringBuilder.Length = 0;
@@ -115,7 +126,7 @@ namespace G9JSONHandler
         /// </summary>
         /// <param name="json">Specifies JSON data for splitting</param>
         /// <returns>A collection of split data</returns>
-        private static List<string> Splitter(string json)
+        private static List<string> Splitter(string json, bool appendUniqueCharacter = true)
         {
             var splitArray = _splitArrayPool.Count > 0 ? _splitArrayPool.Pop() : new List<string>();
             splitArray.Clear();
@@ -136,7 +147,7 @@ namespace G9JSONHandler
                         parseDepth--;
                         break;
                     case '"':
-                        i = CatchStringBetweenSigns(true, i, json);
+                        i = CatchStringBetweenSigns(appendUniqueCharacter, i, json);
                         continue;
                     case ',':
                     case ':':
@@ -170,7 +181,7 @@ namespace G9JSONHandler
 
             if (type.IsEnum || (!G9Assembly.TypeTools.IsEnumerableType(type) &&
                                 G9Assembly.TypeTools.IsTypeBuiltInDotNetType(type)))
-                return G9Assembly.TypeTools.SmartChangeType(PrepareStringType(json.Trim('"')), type);
+                return G9Assembly.TypeTools.SmartChangeType(PrepareStringType(TrimStringSign(json)), type);
 
             if (type.IsArray)
             {
@@ -220,7 +231,7 @@ namespace G9JSONHandler
                     if (json[0] != '{' || json[json.Length - 1] != '}')
                         return null;
                     //The list is split into key/value pairs only, this means the split must be divisible by 2 to be valid JSON
-                    var elems = Splitter(json);
+                    var elems = Splitter(json, false);
                     if (elems.Count % 2 != 0)
                         return null;
 
@@ -255,7 +266,7 @@ namespace G9JSONHandler
             var parseStringBuilder = new StringBuilder(json.Length);
             for (var i = 0; i < json.Length; ++i)
             {
-                if (json[i] == '\\' && i + 1 < json.Length - 1)
+                if (json[i] == '\\' && i + 1 < json.Length)
                 {
                     // ReSharper disable once StringLiteralTypo
                     var j = "\"\\nrtbf/".IndexOf(json[i + 1]);
@@ -355,7 +366,7 @@ namespace G9JSONHandler
         {
             foreach (var m in members)
             {
-                var nameAttr = m.GetCustomAttributes<G9AttrJsonCustomMemberNameAttribute>(true);
+                var nameAttr = m.GetCustomAttributes<G9AttrJsonMemberCustomNameAttribute>(true);
                 dic.Add(nameAttr.Any() ? nameAttr[0].Name : m.Name, m);
             }
         }
@@ -368,7 +379,8 @@ namespace G9JSONHandler
         /// <returns>An object created by JSON data</returns>
         private static object ParseObject(Type type, string json)
         {
-            var instance = FormatterServices.GetUninitializedObject(type);
+            // Create uninitialized instance from type
+            var instance = G9Assembly.InstanceTools.CreateUninitializedInstanceFromType(type);
 
             //The list is split into key/value pairs only, this means the split must be divisible by 2 to be valid JSON
             var elems = Splitter(json);
@@ -393,21 +405,65 @@ namespace G9JSONHandler
                 if (elems[i].Length <= 2)
                     continue;
                 var key = elems[i].Substring(1, elems[i].Length - 2);
-                var value = elems[i + 1];
+                var value = TrimStringSign(elems[i + 1]);
 
                 if (!members.TryGetValue(key, out var memberInfo)) continue;
 
-                // Check custom parser for a member
-                var customParser = memberInfo.GetCustomAttributes<G9AttrJsonCustomMemberParsingProcessAttribute>(true)
+                // Check encryption/decryption attr
+                var encryptionDecryption = memberInfo.GetCustomAttributes<G9AttrJsonMemberEncryptionAttribute>(true)
                     .FirstOrDefault();
-                if (customParser != null && customParser.ParserType != G9ECustomParserType.ObjectToJson)
-                    memberInfo.SetValue(
-                        customParser.StringToObjectMethod.CallMethodWithResult<object>(value.Trim('"'), memberInfo));
-                else
-                    memberInfo.SetValue(ParsePureJsonData(memberInfo.MemberType, value));
+                if (encryptionDecryption != null)
+                {
+                    value = G9Assembly.CryptographyTools.AesDecryptString(value,
+                        encryptionDecryption.PrivateKey, encryptionDecryption.InitializationVector,
+                        encryptionDecryption.AesConfig);
+                }
+
+                // Check custom parser for a member
+                var customParser = memberInfo.GetCustomAttributes<G9AttrJsonMemberCustomParserAttribute>(true)
+                    .FirstOrDefault();
+
+                try
+                {
+                    if (customParser != null && customParser.ParserType != G9ECustomParserType.ObjectToJson)
+                        memberInfo.SetValue(
+                            customParser.StringToObjectMethod.CallMethodWithResult<object>(value,
+                                memberInfo));
+                    else
+                        memberInfo.SetValue(ParsePureJsonData(memberInfo.MemberType, value));
+                }
+                catch (Exception e)
+                {
+                    // Continue on exception if ignore mismatching is true
+                    if (_ignoreMismatching) continue;
+
+                    // Generate a readable exception
+                    if (customParser != null)
+                        throw new Exception(
+                            $@"An exception occurred when the custom parser '{customParser.GetType().FullName}' tried to parse the value '{value}' for member '{memberInfo.Name}' in type '{type.FullName}'.",
+                            e);
+                    throw new Exception(
+                        $@"An exception occurred when the parser tried to parse the value '{value}' for member '{memberInfo.Name}' in type '{type.FullName}'.
+If the value structure is correct, it seems that the default parser can't parse it, so that you can implement a custom parser for this type with the attribute '{nameof(G9AttrJsonMemberCustomParserAttribute)}'.",
+                        e);
+                }
             }
 
             return instance;
+        }
+
+        /// <summary>
+        ///     Method to perform a custom trim for string values
+        /// </summary>
+        /// <param name="value">Specifies a string value for trim</param>
+        /// <returns>Trim string (If Needed)</returns>
+        private static string TrimStringSign(string value)
+        {
+            var startPos = value[0] == '"';
+            var endPos = value[value.Length - 1] == '"';
+            if (startPos && endPos)
+                return value.Substring(1, value.Length - 2);
+            return value;
         }
     }
 }
