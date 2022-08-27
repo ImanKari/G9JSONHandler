@@ -4,7 +4,7 @@
 		<TargetFrameworks>net35;net40;net45;netstandard2.0;netstandard2.1</TargetFrameworks>
 		<GeneratePackageOnBuild>true</GeneratePackageOnBuild>
 		<PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
-		<Version>2.0.3.1</Version>
+		<Version>2.0.4.2</Version>
 		<Authors>Iman Kari</Authors>
 		<Company>G9Studio</Company>
 		<Product>G9 JSON Handler</Product>
@@ -18,12 +18,11 @@
 		<NeutralLanguage>en</NeutralLanguage>
 		<PackageIcon>G9-Icon.png</PackageIcon>
 		<PackageIconUrl />
-		<AssemblyVersion>2.0.3.1</AssemblyVersion>
-		<PackageReleaseNotes>-- Implemented G9AttrJsonMemberEncryptionAttribute.
--- Implemented ignore mismatching option on parsing.
--- Redesigned the structure of parsing (Performance).
--- Completed tests</PackageReleaseNotes>
-		<FileVersion>2.0.3.1</FileVersion>
+		<AssemblyVersion>2.0.4.2</AssemblyVersion>
+		<PackageReleaseNotes>-- Implemented adding a custom parser for a specified type (G9ACustomTypeParser/G9ACustomTypeParserUnique)
+-- Redesigned the structure.
+-- Completed tests.</PackageReleaseNotes>
+		<FileVersion>2.0.4.2</FileVersion>
 
 		<EmbedAllSources>True</EmbedAllSources>
 		<!--<SymbolPackageFormat>snupkg</SymbolPackageFormat>-->
@@ -63,6 +62,7 @@
 	<ItemGroup>
 		<Folder Include="build\" />
 		<Folder Include="Interfaces\" />
+		<Folder Include="Common\" />
 	</ItemGroup>
 
 	<ItemGroup>

@@ -8,9 +8,7 @@ namespace G9JSONHandler.Attributes
     /// </summary>
     [AttributeUsage(AttributeTargets.Property | AttributeTargets.Field,
         // ReSharper disable once RedundantAttributeUsageProperty
-        AllowMultiple = false,
-        // ReSharper disable once RedundantAttributeUsageProperty
-        Inherited = false)]
+        AllowMultiple = false)]
     public class G9AttrJsonStoreEnumAsStringAttribute : Attribute
     {
     }

@@ -5,6 +5,7 @@ using G9AssemblyManagement;
 using G9JSONHandler;
 using G9JSONHandler.Attributes;
 using G9JSONHandler_NUnitTest.DataTypeForTest;
+using G9JSONHandler_NUnitTest.ParserStructure;
 using NUnit.Framework;
 
 namespace G9JSONHandler_NUnitTest
@@ -272,10 +273,11 @@ If the value structure is correct, it seems that the default parser can't parse 
             // Ignore mismatching
             // both of them parsed without mismatch member
             var object1 = json.G9JsonToObject<G9DtSmallSampleClass>(true);
-            Assert.True(object1.Name == "32" && object1.Color == ConsoleColor.DarkMagenta && Equals(object1.Age, default(int)));
+            Assert.True(object1.Name == "32" && object1.Color == ConsoleColor.DarkMagenta &&
+                        Equals(object1.Age, default(int)));
             var object2 = json.G9JsonToObject<G9DtSmallSampleClassCustomParse>(true);
-            Assert.True(object2.Name == "32" && object2.Color == ConsoleColor.DarkMagenta && Equals(object2.Age, default(int)));
-
+            Assert.True(object2.Name == "32" && object2.Color == ConsoleColor.DarkMagenta &&
+                        Equals(object2.Age, default(int)));
         }
 
         [Test]
@@ -300,6 +302,69 @@ If the value structure is correct, it seems that the default parser can't parse 
             }
 
             G9Assembly.PerformanceTools.MultiThreadShockTest(TestEncryptionAttr, 99_999);
+        }
+
+        [Test]
+        [Order(6)]
+        public void TestCustomParserStructure()
+        {
+            void testCustomParserStructure(int randomNumber)
+            {
+                // Test setting a custom type parser on type G9CClassA.
+                var testClass = new G9CClassA();
+                var jsonData = testClass.G9ObjectToJson();
+                var objectData = jsonData.G9JsonToObject<G9CClassA>();
+                Assert.True(objectData.A == "G9TM" && objectData.B == 6);
+
+                // Test setting a custom type parser on type G9CClassA that is a child of another type (G9CClassB).
+                var testClass2 = new G9CClassB();
+                var jsonData2 = testClass2.G9ObjectToJson();
+                var objectData2 = jsonData2.G9JsonToObject<G9CClassB>();
+                Assert.True(objectData2.A == "G9" && objectData2.B == 99 && objectData2.Extra.A == "G9TM" &&
+                            objectData2.Extra.B == 6);
+
+
+                // Set incorrect string value according to objects G9CClassA, G9CClassB
+                var jsonWrongData = "{\"G9TM-G9TM\"}";
+                var jsonWrongData1 = "{\"A\":\"G9\",\"B\":99,\"Extra\":\"G9TM-G9TM\"}";
+
+                // It is expected an exception will occur because of the mismatching.
+                try
+                {
+                    jsonWrongData.G9JsonToObject<G9CClassA>();
+                    Assert.Fail();
+                }
+                catch (Exception e)
+                {
+                    Assert.True(e.Message ==
+                                "An exception occurred when the custom parser 'G9JSONHandler_NUnitTest.ParserStructure.G9CCustomParserStructureForClassA' tried to parse the value '{\"G9TM-G9TM\"}' for type 'G9JSONHandler_NUnitTest.ParserStructure.G9CClassA'.");
+                }
+
+                // It is expected an exception will occur because of the mismatching.
+                try
+                {
+                    jsonWrongData1.G9JsonToObject<G9CClassB>();
+                    Assert.Fail();
+                }
+                catch (Exception e)
+                {
+                    Assert.True(e.Message ==
+                                "An exception occurred when the custom parser 'G9JSONHandler_NUnitTest.ParserStructure.G9CCustomParserStructureForClassA' tried to parse the value 'G9TM-G9TM' for member 'Extra' in type 'G9JSONHandler_NUnitTest.ParserStructure.G9CClassB'.");
+                }
+
+                // Ignore mismatching
+                var objectTest = jsonWrongData1.G9JsonToObject<G9CClassB>(true);
+                Assert.True(objectTest.A == "G9" && objectTest.B == 99 && objectTest.Extra == null);
+
+
+                // Test setting a custom unique type parser on type G9CClassC.
+                var testClassUnique = new G9CClassC();
+                var jsonDataUnique = testClassUnique.G9ObjectToJson();
+                var objectDataUnique = jsonDataUnique.G9JsonToObject<G9CClassC>();
+                Assert.True(objectDataUnique.A == "G9TM" && objectDataUnique.B == 96);
+            }
+
+            G9Assembly.PerformanceTools.MultiThreadShockTest(testCustomParserStructure, 99_999);
         }
     }
 }

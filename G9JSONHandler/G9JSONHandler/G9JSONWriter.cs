@@ -7,6 +7,7 @@ using G9AssemblyManagement;
 using G9AssemblyManagement.Enums;
 using G9AssemblyManagement.Interfaces;
 using G9JSONHandler.Attributes;
+using G9JSONHandler.Common;
 using G9JSONHandler.Enum;
 
 namespace G9JSONHandler
@@ -229,61 +230,81 @@ namespace G9JSONHandler
 
             var isFirst = true;
 
-            // Get total members
-            var objectMembers = G9Assembly.ObjectAndReflectionTools.GetFieldsOfObject(objectItem,
-                    G9EAccessModifier.Public,
-                    s => !s.GetCustomAttributes(typeof(G9AttrJsonIgnoreMemberAttribute), true).Any())
-                .Select(s => (G9IMember)s).Concat(
-                    G9Assembly.ObjectAndReflectionTools.GetPropertiesOfObject(objectItem,
-                            G9EAccessModifier.Public,
-                            s => s.CanRead && !s.GetCustomAttributes(typeof(G9AttrJsonIgnoreMemberAttribute), true)
-                                .Any())
-                        .Select(s => (G9IMember)s)
-                ).ToArray();
-
-            // Parsing process
-            foreach (var m in objectMembers)
+            // Check custom parse for a member in interface way
+            if (G9CJsonCommon.CustomParserCollection != null && G9CJsonCommon.CustomParserCollection.ContainsKey(type))
             {
-                var value = m.GetValue();
-                if (value == null) continue;
-                if (isFirst)
-                    isFirst = false;
-                else
-                    stringBuilder.Append(_unformatted ? "," : $",\n{new string('\t', tabsNumber)}");
+                ParseObjectMembersToJson(stringBuilder,
+                    G9CJsonCommon.CustomParserCollection[type].Item2(objectItem, null),
+                    ref tabsNumber);
+            }
+            else
+            {
+                // Get total members
+                var objectMembers = G9Assembly.ObjectAndReflectionTools.GetFieldsOfObject(objectItem,
+                        G9EAccessModifier.Public,
+                        s => !s.GetCustomAttributes(typeof(G9AttrJsonIgnoreMemberAttribute), true).Any())
+                    .Select(s => (G9IMember)s).Concat(
+                        G9Assembly.ObjectAndReflectionTools.GetPropertiesOfObject(objectItem,
+                                G9EAccessModifier.Public,
+                                s => s.CanRead && !s.GetCustomAttributes(typeof(G9AttrJsonIgnoreMemberAttribute), true)
+                                    .Any())
+                            .Select(s => (G9IMember)s)
+                    ).ToArray();
 
-                // Write note comments if that existed
-                var fieldNoteComments = m.GetCustomAttributes<G9AttrJsonCommentAttribute>(true);
-                if (fieldNoteComments.Any())
-                    foreach (var note in fieldNoteComments)
-                        WriteJsonNoteComment(stringBuilder, note.CustomNote, note.IsNonstandardComment, tabsNumber,
-                            commentNumber++);
-
-                stringBuilder.Append('\"');
-                var nameAttr = m.GetCustomAttributes<G9AttrJsonMemberCustomNameAttribute>(true);
-                stringBuilder.Append(nameAttr.Any() ? nameAttr[0].Name : m.Name);
-                stringBuilder.Append(_separator);
-
-                // Check encryption/decryption attr
-                var encryptionDecryption = m.GetCustomAttributes<G9AttrJsonMemberEncryptionAttribute>(true)
-                    .FirstOrDefault();
-                if (encryptionDecryption != null)
+                // Parsing process
+                foreach (var m in objectMembers)
                 {
-                    value = G9Assembly.CryptographyTools.AesEncryptString(value.ToString(),
-                        encryptionDecryption.PrivateKey, encryptionDecryption.InitializationVector,
-                        encryptionDecryption.AesConfig);
-                }
+                    var value = m.GetValue();
+                    if (value == null) continue;
+                    if (isFirst)
+                        isFirst = false;
+                    else
+                        stringBuilder.Append(_unformatted ? "," : $",\n{new string('\t', tabsNumber)}");
 
-                // Check custom parser for a member
-                var customParser = m.GetCustomAttributes<G9AttrJsonMemberCustomParserAttribute>(true)
-                    .FirstOrDefault();
-                if (customParser != null && customParser.ParserType != G9ECustomParserType.StringToObject)
-                    ParseObjectMembersToJson(stringBuilder,
-                        customParser.ObjectToStringMethod.CallMethodWithResult<string>(value, m), ref tabsNumber);
-                else if (m.MemberType.IsEnum &&
-                         m.GetCustomAttributes<G9AttrJsonStoreEnumAsStringAttribute>(true).Any())
-                    ParseObjectMembersToJson(stringBuilder, value.ToString(), ref tabsNumber);
-                else
-                    ParseObjectMembersToJson(stringBuilder, value, ref tabsNumber);
+                    // Write note comments if that existed
+                    var fieldNoteComments = m.GetCustomAttributes<G9AttrJsonCommentAttribute>(true);
+                    if (fieldNoteComments.Any())
+                        foreach (var note in fieldNoteComments)
+                            WriteJsonNoteComment(stringBuilder, note.CustomNote, note.IsNonstandardComment, tabsNumber,
+                                commentNumber++);
+
+                    stringBuilder.Append('\"');
+                    var nameAttr = m.GetCustomAttributes<G9AttrJsonMemberCustomNameAttribute>(true);
+                    stringBuilder.Append(nameAttr.Any() ? nameAttr[0].Name : m.Name);
+                    stringBuilder.Append(_separator);
+
+                    // Check encryption/decryption attr
+                    var encryptionDecryption = m.GetCustomAttributes<G9AttrJsonMemberEncryptionAttribute>(true)
+                        .FirstOrDefault();
+                    if (encryptionDecryption != null)
+                        value = G9Assembly.CryptographyTools.AesEncryptString(value.ToString(),
+                            encryptionDecryption.PrivateKey, encryptionDecryption.InitializationVector,
+                            encryptionDecryption.AesConfig);
+
+                    // Check custom parse for a member in interface way
+                    if (G9CJsonCommon.CustomParserCollection != null &&
+                        G9CJsonCommon.CustomParserCollection.ContainsKey(m.MemberType))
+                    {
+                        ParseObjectMembersToJson(stringBuilder,
+                            G9CJsonCommon.CustomParserCollection[m.MemberType].Item2(value, m),
+                            ref tabsNumber);
+                    }
+                    else
+                    {
+                        // Check custom parser for a member
+                        var customParser = m.GetCustomAttributes<G9AttrJsonMemberCustomParserAttribute>(true)
+                            .FirstOrDefault();
+                        if (customParser != null && customParser.ParserType != G9ECustomParserType.StringToObject)
+                            ParseObjectMembersToJson(stringBuilder,
+                                customParser.ObjectToStringMethod.CallMethodWithResult<string>(value, m),
+                                ref tabsNumber);
+                        else if (m.MemberType.IsEnum &&
+                                 m.GetCustomAttributes<G9AttrJsonStoreEnumAsStringAttribute>(true).Any())
+                            ParseObjectMembersToJson(stringBuilder, value.ToString(), ref tabsNumber);
+                        else
+                            ParseObjectMembersToJson(stringBuilder, value, ref tabsNumber);
+                    }
+                }
             }
 
             stringBuilder.Append(_unformatted ? "}" : $"\n{new string('\t', --tabsNumber)}}}");

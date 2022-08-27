@@ -8,6 +8,7 @@ using G9AssemblyManagement;
 using G9AssemblyManagement.Enums;
 using G9AssemblyManagement.Interfaces;
 using G9JSONHandler.Attributes;
+using G9JSONHandler.Common;
 using G9JSONHandler.Enum;
 
 namespace G9JSONHandler
@@ -379,11 +380,30 @@ namespace G9JSONHandler
         /// <returns>An object created by JSON data</returns>
         private static object ParseObject(Type type, string json)
         {
+            //The list is split into key/value pairs only, this means the split must be divisible by 2 to be valid JSON
+            var elems = Splitter(json);
+
+            try
+            {
+                if (G9CJsonCommon.CustomParserCollection != null &&
+                    G9CJsonCommon.CustomParserCollection.ContainsKey(type))
+                    return G9CJsonCommon.CustomParserCollection[type].Item1(TrimStringSign(elems[0]), null);
+            }
+            catch (Exception e)
+            {
+                // Continue on exception if ignore mismatching is true
+                if (_ignoreMismatching)
+                    return G9Assembly.InstanceTools.CreateUninitializedInstanceFromType(type);
+
+                // Generate a readable exception
+                throw new Exception(
+                    $@"An exception occurred when the custom parser '{G9CJsonCommon.CustomParserInstanceCollection[type].GetType().FullName}' tried to parse the value '{json}' for type '{type.FullName}'.",
+                    e);
+            }
+
             // Create uninitialized instance from type
             var instance = G9Assembly.InstanceTools.CreateUninitializedInstanceFromType(type);
 
-            //The list is split into key/value pairs only, this means the split must be divisible by 2 to be valid JSON
-            var elems = Splitter(json);
             if (elems.Count % 2 != 0)
                 return instance;
 
@@ -413,11 +433,9 @@ namespace G9JSONHandler
                 var encryptionDecryption = memberInfo.GetCustomAttributes<G9AttrJsonMemberEncryptionAttribute>(true)
                     .FirstOrDefault();
                 if (encryptionDecryption != null)
-                {
                     value = G9Assembly.CryptographyTools.AesDecryptString(value,
                         encryptionDecryption.PrivateKey, encryptionDecryption.InitializationVector,
                         encryptionDecryption.AesConfig);
-                }
 
                 // Check custom parser for a member
                 var customParser = memberInfo.GetCustomAttributes<G9AttrJsonMemberCustomParserAttribute>(true)
@@ -425,7 +443,12 @@ namespace G9JSONHandler
 
                 try
                 {
-                    if (customParser != null && customParser.ParserType != G9ECustomParserType.ObjectToJson)
+                    // Check custom parse for a member in interface way
+                    if (G9CJsonCommon.CustomParserCollection != null &&
+                        G9CJsonCommon.CustomParserCollection.ContainsKey(memberInfo.MemberType))
+                        memberInfo.SetValue(G9CJsonCommon.CustomParserCollection[memberInfo.MemberType]
+                            .Item1(value, memberInfo));
+                    else if (customParser != null && customParser.ParserType != G9ECustomParserType.ObjectToJson)
                         memberInfo.SetValue(
                             customParser.StringToObjectMethod.CallMethodWithResult<object>(value,
                                 memberInfo));
@@ -438,6 +461,11 @@ namespace G9JSONHandler
                     if (_ignoreMismatching) continue;
 
                     // Generate a readable exception
+                    if (G9CJsonCommon.CustomParserCollection != null &&
+                        G9CJsonCommon.CustomParserCollection.ContainsKey(memberInfo.MemberType))
+                        throw new Exception(
+                            $@"An exception occurred when the custom parser '{G9CJsonCommon.CustomParserInstanceCollection[memberInfo.MemberType].GetType().FullName}' tried to parse the value '{value}' for member '{memberInfo.Name}' in type '{type.FullName}'.",
+                            e);
                     if (customParser != null)
                         throw new Exception(
                             $@"An exception occurred when the custom parser '{customParser.GetType().FullName}' tried to parse the value '{value}' for member '{memberInfo.Name}' in type '{type.FullName}'.",

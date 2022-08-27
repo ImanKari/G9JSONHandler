@@ -17,6 +17,27 @@ namespace G9JSONHandler.Attributes
         AllowMultiple = false)]
     public class G9AttrJsonMemberCustomParserAttribute : Attribute
     {
+        #region Fields And Properties
+
+        /// <summary>
+        ///     Specifies the type of parser
+        /// </summary>
+        public G9ECustomParserType ParserType { get; }
+
+        /// <summary>
+        ///     Property to save specified method for parsing a string to an object
+        /// </summary>
+        public G9DtMethod StringToObjectMethod { private set; get; }
+
+        /// <summary>
+        ///     Property to save specified method for parsing an object to a string
+        /// </summary>
+        public G9DtMethod ObjectToStringMethod { private set; get; }
+
+        #endregion
+
+        #region Methods
+
         /// <summary>
         ///     Constructor for initializing parser methods.
         ///     <para />
@@ -170,21 +191,6 @@ namespace G9JSONHandler.Attributes
         }
 
         /// <summary>
-        ///     Specifies the type of parser
-        /// </summary>
-        public G9ECustomParserType ParserType { get; }
-
-        /// <summary>
-        ///     Property to save specified method for parsing a string to an object
-        /// </summary>
-        public G9DtMethod StringToObjectMethod { private set; get; }
-
-        /// <summary>
-        ///     Property to save specified method for parsing an object to a string
-        /// </summary>
-        public G9DtMethod ObjectToStringMethod { private set; get; }
-
-        /// <summary>
         ///     Method to specify one method for parsing, which can be the string to object method or the object to string method.
         /// </summary>
         /// <param name="isStringToObjectMethod">
@@ -295,5 +301,7 @@ For the 'StringToObject' method, the first parameter is 'object,' and the second
 
             return false;
         }
+
+        #endregion
     }
 }
