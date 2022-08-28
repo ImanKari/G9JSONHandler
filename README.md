@@ -278,7 +278,9 @@ objectData.B; // 6
 - **Notice: This parser type uses a created instance for all members with the specified type in an object. Its meaning is if you use some things in the body of the class (out of methods) like fields and properties, those things are used for all members with the specified type, and maybe a conflict occurs during parse time. To prevent this type of conflict, you must use another abstract class called 'G9ACustomTypeParserUnique<>'. For this type, per each member, a new instance is created and, after use, deleted (don't use it unless in mandatory condition because it has a bad performance in terms of memory usage and speed).**
 
 ### Defining the advanced parser for a specified (**generic**) type
-The abstract class '**G9ACustomGenericTypeParser**' enables you to define a custom parser for a specified **generic** type. Many parts of this structure are like the previous structure, with this difference that the target type for reacting (that is generic type) specified by inherited abstract class constructor.
+The abstract class '**G9ACustomGenericTypeParser**' enables you to define a custom parser for a specified **generic** type. \
+Many parts of this structure are like the previous structure, with this difference that the target type for reacting (that is generic type) specified by inherited abstract class constructor. \
+In addition, in this case, the parser methods receive and return generic objects as the object type (not generic type) that, like the below example or in your own way (with the reflections), you can handle them.
 ```csharp
 // Sample Class
 public class ClassB<TType>
@@ -306,7 +308,7 @@ public class CustomParserStructureForClassB : G9ACustomGenericTypeParser
   }
   // Method to parse string to specified generic object (ClassB<>).
   // The second parameter 'genericTypes', Specifies the type of generic parameters for target type.
-  public override ClassB StringToObject(string stringForParsing, Type[] genericTypes, G9IMemberGetter accessToObjectMember)
+  public override object StringToObject(string stringForParsing, Type[] genericTypes, G9IMemberGetter accessToObjectMember)
   {
       var data = stringForParsing.Split("-");
       return new ClassB<string>()
