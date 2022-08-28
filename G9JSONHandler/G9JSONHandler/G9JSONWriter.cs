@@ -63,7 +63,7 @@ namespace G9JSONHandler
             if (!type.IsArray && !type.IsGenericType &&
                 (type.IsEnum || G9Assembly.TypeTools.IsTypeBuiltInDotNetType(type)))
                 ParseDotNetBuiltInTypes(stringBuilder, objectItem, type);
-            else if (type.IsArray || type.IsGenericType || G9Assembly.TypeTools.IsEnumerableType(type))
+            else if (type.IsArray || G9Assembly.TypeTools.IsEnumerableType(type))
                 ParseCollectionTypes(stringBuilder, objectItem, type, ref tabsNumber);
             else
                 ParseCustomObjectTypes(stringBuilder, objectItem, type, ref tabsNumber);
@@ -231,10 +231,14 @@ namespace G9JSONHandler
             var isFirst = true;
 
             // Check custom parse for a member in interface way
-            if (G9CJsonCommon.CustomParserCollection != null && G9CJsonCommon.CustomParserCollection.ContainsKey(type))
+            if (G9CJsonCommon.CustomParserCollection != null &&
+                G9CJsonCommon.CustomParserCollection.ContainsKey(type.IsGenericType
+                    ? type.GetGenericTypeDefinition()
+                    : type))
             {
                 ParseObjectMembersToJson(stringBuilder,
-                    G9CJsonCommon.CustomParserCollection[type].Item2(objectItem, null),
+                    G9CJsonCommon.CustomParserCollection[type.IsGenericType ? type.GetGenericTypeDefinition() : type]
+                        .Item2(objectItem, type, null),
                     ref tabsNumber);
             }
             else
@@ -283,10 +287,15 @@ namespace G9JSONHandler
 
                     // Check custom parse for a member in interface way
                     if (G9CJsonCommon.CustomParserCollection != null &&
-                        G9CJsonCommon.CustomParserCollection.ContainsKey(m.MemberType))
+                        G9CJsonCommon.CustomParserCollection.ContainsKey(m.MemberType.IsGenericType
+                            ? m.MemberType.GetGenericTypeDefinition()
+                            : m.MemberType))
                     {
                         ParseObjectMembersToJson(stringBuilder,
-                            G9CJsonCommon.CustomParserCollection[m.MemberType].Item2(value, m),
+                            G9CJsonCommon
+                                .CustomParserCollection[
+                                    m.MemberType.IsGenericType ? m.MemberType.GetGenericTypeDefinition() : m.MemberType]
+                                .Item2(value, m.MemberType, m),
                             ref tabsNumber);
                     }
                     else

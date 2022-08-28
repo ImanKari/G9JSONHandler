@@ -305,7 +305,7 @@ If the value structure is correct, it seems that the default parser can't parse 
         }
 
         [Test]
-        [Order(6)]
+        [Order(7)]
         public void TestCustomParserStructure()
         {
             void testCustomParserStructure(int randomNumber)
@@ -362,7 +362,30 @@ If the value structure is correct, it seems that the default parser can't parse 
                 var jsonDataUnique = testClassUnique.G9ObjectToJson();
                 var objectDataUnique = jsonDataUnique.G9JsonToObject<G9CClassC>();
                 Assert.True(objectDataUnique.A == "G9TM" && objectDataUnique.B == 96);
+
+                // Test setting a custom generic type parser on type G9CClassD
+                var testGenericClassA = new G9CClassD<int>();
+                var jsonDataGenericA = testGenericClassA.G9ObjectToJson();
+                Assert.True(jsonDataGenericA == "{\"G9-99\"}");
+                var objectDataGenericA = jsonDataGenericA.G9JsonToObject<G9CClassD<int>>();
+                Assert.True(objectDataGenericA.A == "G9" && objectDataGenericA.B == 99);
+
+                var testGenericClassB = new G9CClassD<string>();
+                var jsonDataGenericB = testGenericClassB.G9ObjectToJson();
+                Assert.True(jsonDataGenericB == "{\"G9-None\"}");
+                var objectDataGenericB = jsonDataGenericB.G9JsonToObject<G9CClassD<string>>();
+                Assert.True(objectDataGenericB.A == "G9" && objectDataGenericB.B == "None");
+
+                // Test setting a custom generic type parser on type G9CClassD as a child
+                var testGenericClassC = new G9CClassD2();
+                var jsonDataGenericC = testGenericClassC.G9ObjectToJson();
+                Assert.True(jsonDataGenericC == "{\"A\":\"G9\",\"Extra\":\"Okay-9999.9999\"}");
+                var objectDataGenericC = jsonDataGenericC.G9JsonToObject<G9CClassD2>();
+                Assert.True(objectDataGenericC.A == "G9" && objectDataGenericC.Extra.A == "Okay" &&
+                            objectDataGenericC.Extra.B == 9999.9999m);
             }
+
+            testCustomParserStructure(0);
 
             G9Assembly.PerformanceTools.MultiThreadShockTest(testCustomParserStructure, 99_999);
         }

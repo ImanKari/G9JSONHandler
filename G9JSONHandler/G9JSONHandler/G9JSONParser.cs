@@ -5,6 +5,7 @@ using System.Globalization;
 using System.Linq;
 using System.Text;
 using G9AssemblyManagement;
+using G9AssemblyManagement.DataType;
 using G9AssemblyManagement.Enums;
 using G9AssemblyManagement.Interfaces;
 using G9JSONHandler.Attributes;
@@ -386,8 +387,12 @@ namespace G9JSONHandler
             try
             {
                 if (G9CJsonCommon.CustomParserCollection != null &&
-                    G9CJsonCommon.CustomParserCollection.ContainsKey(type))
-                    return G9CJsonCommon.CustomParserCollection[type].Item1(TrimStringSign(elems[0]), null);
+                    G9CJsonCommon.CustomParserCollection.ContainsKey(type.IsGenericType
+                        ? type.GetGenericTypeDefinition()
+                        : type))
+                    return G9CJsonCommon
+                        .CustomParserCollection[type.IsGenericType ? type.GetGenericTypeDefinition() : type]
+                        .Item1(TrimStringSign(elems[0]), type, null);
             }
             catch (Exception e)
             {
@@ -397,7 +402,7 @@ namespace G9JSONHandler
 
                 // Generate a readable exception
                 throw new Exception(
-                    $@"An exception occurred when the custom parser '{G9CJsonCommon.CustomParserInstanceCollection[type].GetType().FullName}' tried to parse the value '{json}' for type '{type.FullName}'.",
+                    $@"An exception occurred when the custom parser '{G9CJsonCommon.CustomParserInstanceCollection[type.IsGenericType ? type.GetGenericTypeDefinition() : type].GetType().FullName}' tried to parse the value '{json}' for type '{type.FullName}'.",
                     e);
             }
 
@@ -445,9 +450,15 @@ namespace G9JSONHandler
                 {
                     // Check custom parse for a member in interface way
                     if (G9CJsonCommon.CustomParserCollection != null &&
-                        G9CJsonCommon.CustomParserCollection.ContainsKey(memberInfo.MemberType))
-                        memberInfo.SetValue(G9CJsonCommon.CustomParserCollection[memberInfo.MemberType]
-                            .Item1(value, memberInfo));
+                        G9CJsonCommon.CustomParserCollection.ContainsKey(memberInfo.MemberType.IsGenericType
+                            ? memberInfo.MemberType.GetGenericTypeDefinition()
+                            : memberInfo.MemberType))
+                        memberInfo.SetValue(G9CJsonCommon
+                            .CustomParserCollection[
+                                memberInfo.MemberType.IsGenericType
+                                    ? memberInfo.MemberType.GetGenericTypeDefinition()
+                                    : memberInfo.MemberType]
+                            .Item1(value, memberInfo.MemberType, memberInfo));
                     else if (customParser != null && customParser.ParserType != G9ECustomParserType.ObjectToJson)
                         memberInfo.SetValue(
                             customParser.StringToObjectMethod.CallMethodWithResult<object>(value,
@@ -462,9 +473,11 @@ namespace G9JSONHandler
 
                     // Generate a readable exception
                     if (G9CJsonCommon.CustomParserCollection != null &&
-                        G9CJsonCommon.CustomParserCollection.ContainsKey(memberInfo.MemberType))
+                        G9CJsonCommon.CustomParserCollection.ContainsKey(memberInfo.MemberType.IsGenericType
+                            ? memberInfo.MemberType.GetGenericTypeDefinition()
+                            : memberInfo.MemberType))
                         throw new Exception(
-                            $@"An exception occurred when the custom parser '{G9CJsonCommon.CustomParserInstanceCollection[memberInfo.MemberType].GetType().FullName}' tried to parse the value '{value}' for member '{memberInfo.Name}' in type '{type.FullName}'.",
+                            $@"An exception occurred when the custom parser '{G9CJsonCommon.CustomParserInstanceCollection[memberInfo.MemberType.IsGenericType ? memberInfo.MemberType.GetGenericTypeDefinition() : memberInfo.MemberType].GetType().FullName}' tried to parse the value '{value}' for member '{memberInfo.Name}' in type '{type.FullName}'.",
                             e);
                     if (customParser != null)
                         throw new Exception(

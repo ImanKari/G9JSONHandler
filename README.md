@@ -91,17 +91,20 @@ public class G9DtSmallSampleClass
 }
 
 // The json data is:
-var json = "{\"Name\":32,\"Age\":\"Iman\",\"Color\":5}";
+var jsonData = "{\"Name\":32,\"Age\":\"Iman\",\"Color\":5}";
 
 // Default process:
 // var newObject = formattedJson.G9JsonToObject<G9DtSmallSampleClass>();
 // Note: Above process throws an exception like this:
 // ### An exception occurred when the parser tried to parse the value 'Iman' for member 'Age' in type '....G9DtSmallSampleClass'.###
-// But by setting the parameter 'ignoreMismatching,' it can specify that if in the parsing process a mismatch occurs, the exception (mismatch) is ignored.
-var newObject = formattedJson.G9JsonToObject<G9DtSmallSampleClass>(true);
+// But by setting the parameter 'ignoreMismatching' to 'true,' it can specify that if in the parsing process a mismatch occurs, the exception (mismatch) is ignored.
+var newObject = jsonData
+  // The 'ignoreMismatching' parameter is set to 'true.'
+  .G9JsonToObject<G9DtSmallSampleClass>(true);
+// Expected values
 newObject.Name; // 32
 newObject.Color; // DarkMagenta
-newObject.Age; // 0 - default(int)
+newObject.Age; // 0 - default(int) - ignored in the mismatching process.
 ```
 
 ### Attributes
@@ -112,6 +115,7 @@ newObject.Age; // 0 - default(int)
       1. **Standard mode** considers a custom member that consists of a key and value like the usual member item ("__ #CommentN __#": "Comment Data") and saves the comment note there.
       ```csharp
       [G9AttrJsonComment("Custom JSON Comment")] public string Name = ".NET";
+      // Result:
       // {
       //  "#__Comment0__#": "Custom JSON Comment",
       //  "Name": ".NET",
@@ -120,6 +124,7 @@ newObject.Age; // 0 - default(int)
       2. **Nonstandard mode** saves comments notes between two signs ("/* Comment Data  /*") like JavaScript.
       ```csharp
       [G9AttrJsonComment("Custom JSON Comment", true)] public string Name = ".NET";
+      // Result:
       // {
       //  /* Custom JSON Comment */
       //  "Name": ".NET",
@@ -225,12 +230,12 @@ newObject.Age; // 0 - default(int)
   objectData.User; // "G9TM"
   objectData.Password; // "1990"
   ```
-### Advanced
-#### Defining the advanced parser for a specified type
+## Advanced
+### Defining the advanced parser for a specified type
 The abstract class '**G9ACustomTypeParser<>**' enables you to define a custom parser for a specified type (Any type like a built-in .NET type or custom definition type).\
 This abstract class is a generic one where the generic parameter type specifies the type for parsing.\
 In addition, this abstract class has two abstract methods for parsing the string to object and wise versa that must implement by the programmer.\
-Furthermore, each class inherited by this abstract class is automatically used by JSON core (like a dependency injection process).
+Furthermore, each class inherits by this abstract class is automatically used by JSON core (like a dependency injection process).
 ```csharp
 // Sample Class
 public class ClassA
@@ -271,3 +276,56 @@ objectData.B; // 6
 - Note: Each type can have just one parser. An exception is thrown if you define a parser more than one for a type.
 - Note: The second parameter, '**G9IMemberGetter**' in both methods, consists of helpful information about a member (field or property) in an object. If the object wasn't a member of another object (like the above example), these parameters have a null value.
 - **Notice: This parser type uses a created instance for all members with the specified type in an object. Its meaning is if you use some things in the body of the class (out of methods) like fields and properties, those things are used for all members with the specified type, and maybe a conflict occurs during parse time. To prevent this type of conflict, you must use another abstract class called 'G9ACustomTypeParserUnique<>'. For this type, per each member, a new instance is created and, after use, deleted (don't use it unless in mandatory condition because it has a bad performance in terms of memory usage and speed).**
+
+### Defining the advanced parser for a specified (**generic**) type
+The abstract class '**G9ACustomGenericTypeParser**' enables you to define a custom parser for a specified **generic** type. Many parts of this structure are like the previous structure, with this difference that the target type for reacting (that is generic type) specified by inherited abstract class constructor.
+```csharp
+// Sample Class
+public class ClassB<TType>
+{
+    public string A = "G9";
+    public TType B;
+}
+
+// Custom parser structure for generic ClassB<>
+public class CustomParserStructureForClassB : G9ACustomGenericTypeParser
+{
+  public CustomParserStructureForClassB() 
+    // The target type in this case must be specified in inherited constructor like this
+    : base(typeof(ClassB<>))
+  {
+  }
+  // Method to parse specified generic object (ClassB<>) to string.
+  // The second parameter 'genericTypes', Specifies the type of generic parameters for target type.
+  public override string ObjectToString(object objectForParsing, Type[] genericTypes, G9IMemberGetter accessToObjectMember)
+  {
+      var fields = G9Assembly.ObjectAndReflectionTools
+        .GetFieldsOfObject(objectForParsing).ToDictionary(s => s.Name);
+      return fields[nameof(G9CClassD<object>.A)].GetValue<string>() + "-" +
+      fields[nameof(G9CClassD<object>.B)].GetValue();
+  }
+  // Method to parse string to specified generic object (ClassB<>).
+  // The second parameter 'genericTypes', Specifies the type of generic parameters for target type.
+  public override ClassB StringToObject(string stringForParsing, Type[] genericTypes, G9IMemberGetter accessToObjectMember)
+  {
+      var data = stringForParsing.Split("-");
+      return new ClassB<string>()
+      {
+          A = data[0],
+          B = data[1]
+      };
+  }
+}
+
+// Usage
+var object = new ClassB<string>();
+object.B = "None";
+var jsonData = object.G9ObjectToJson(); // "{\"G9-None\"}"
+var objectData = jsonData.G9JsonToObject<ClassB<string>>();
+objectData.A; // "G9TM"
+objectData.B; // "None"
+```
+- Note: The JSON core creates an instance from 'CustomParserStructureForClassB' automatically. So, this class must not have a constructor with a parameter; otherwise, an exception is thrown.
+- Note: Each type can have just one parser. An exception is thrown if you define a parser more than one for a type.
+- Note: The second parameter, '**G9IMemberGetter**' in both methods, consists of helpful information about a member (field or property) in an object. If the object wasn't a member of another object (like the above example), these parameters have a null value.
+- **Notice: This parser type uses a created instance for all members with the specified type in an object. Its meaning is if you use some things in the body of the class (out of methods) like fields and properties, those things are used for all members with the specified type, and maybe a conflict occurs during parse time. To prevent this type of conflict, you must use another abstract class called 'G9ACustomGenericTypeParserUnique'. For this type, per each member, a new instance is created and, after use, deleted (don't use it unless in mandatory condition because it has a bad performance in terms of memory usage and speed).**

@@ -15,7 +15,7 @@ namespace G9JSONHandler.Common
         /// <summary>
         ///     A collection for saving the Parser working process for use per each type
         /// </summary>
-        public static readonly Dictionary<Type, G9DtTuple<Func<object, G9IMemberGetter, object>>>
+        public static readonly Dictionary<Type, G9DtTuple<Func<object, Type, G9IMemberGetter, object>>>
             CustomParserCollection;
 
         /// <summary>
@@ -29,92 +29,171 @@ namespace G9JSONHandler.Common
         static G9CJsonCommon()
         {
             // Get total types inherited by specified abstract class
-            var customTypeParsers = G9Assembly.TypeTools.GetInheritedTypesFromType(typeof(G9ACustomTypeParser<>));
+            var customTypeParsers =
+                // Custom type parser
+                G9Assembly.TypeTools.GetInheritedTypesFromType(typeof(G9ACustomTypeParser<>))
+                    .Concat(
+                        // Custom generic type parser
+                        G9Assembly.TypeTools.GetInheritedTypesFromType(typeof(G9ACustomGenericTypeParser))
+                    ).ToArray();
 
-            if (customTypeParsers.Count == 0)
+            if (customTypeParsers.Length == 0)
                 return;
 
             // Initialize
-            CustomParserInstanceCollection = new Dictionary<Type, object>(customTypeParsers.Count);
+            CustomParserInstanceCollection = new Dictionary<Type, object>(customTypeParsers.Length);
             CustomParserCollection =
-                new Dictionary<Type, G9DtTuple<Func<object, G9IMemberGetter, object>>>(customTypeParsers.Count);
+                new Dictionary<Type, G9DtTuple<Func<object, Type, G9IMemberGetter, object>>>(customTypeParsers.Length);
 
             // The collection is completed by a loop
             // All parsers prepare for use.
             foreach (var parser in customTypeParsers)
             {
-                // Get parser target type
                 // ReSharper disable once PossibleNullReferenceException
-                var genericType = parser.BaseType.GetGenericArguments().First();
+                Type genericTypeDefinition = null;
+                Type targetTypeForParsing;
+
+                // Get parser target type
+                if (parser.BaseType == typeof(G9ACustomGenericTypeParser) ||
+                    parser.BaseType == typeof(G9ACustomGenericTypeParserUnique))
+                {
+                    // Create instance of parser
+                    var instance =
+                        (G9ACustomGenericTypeParser)G9Assembly.InstanceTools.CreateInstanceFromType(parser);
+                    targetTypeForParsing = instance.CustomGenericType;
+                }
+                else
+                {
+                    // ReSharper disable once PossibleNullReferenceException
+                    genericTypeDefinition = parser.BaseType.GetGenericTypeDefinition();
+                    targetTypeForParsing = parser.BaseType.GetGenericArguments().First();
+                }
 
                 // Validation of repetitive parser
-                if (CustomParserInstanceCollection.ContainsKey(genericType))
+                if (CustomParserInstanceCollection.ContainsKey(targetTypeForParsing))
                     throw new Exception(
-                        $@"The considered condition for each type's parser is just one number. But for type '{genericType.FullName}', there is more than one parser.
-First parser for type '{genericType.FullName}': '{CustomParserInstanceCollection[genericType].GetType().FullName}'
-Second parser for type '{genericType.FullName}': ''{parser.FullName}");
+                        $@"The considered condition for each type's parser is just one number. But for type '{targetTypeForParsing.FullName}', there is more than one parser.
+First parser for type '{targetTypeForParsing.FullName}': '{CustomParserInstanceCollection[targetTypeForParsing].GetType().FullName}'
+Second parser for type '{targetTypeForParsing.FullName}': ''{parser.FullName}");
 
 
-                G9DtTuple<Func<object, G9IMemberGetter, object>> access;
+                G9DtTuple<Func<object, Type, G9IMemberGetter, object>> access;
 
-                if (parser.BaseType.IsGenericType &&
-                    parser.BaseType.GetGenericTypeDefinition() == typeof(G9ACustomTypeParserUnique<>))
+                if ((parser.BaseType.IsGenericType && genericTypeDefinition == typeof(G9ACustomTypeParserUnique<>)) ||
+                    parser.BaseType == typeof(G9ACustomGenericTypeParserUnique))
                 {
-                    CustomParserInstanceCollection.Add(genericType, parser);
+                    CustomParserInstanceCollection.Add(targetTypeForParsing, parser);
 
-                    access = new G9DtTuple<Func<object, G9IMemberGetter, object>>
-                    {
-                        Item1 = (o, m) =>
+                    if (parser.BaseType.IsGenericType)
+                        access = new G9DtTuple<Func<object, Type, G9IMemberGetter, object>>
                         {
-                            // Create instance of parser
-                            var instance =
-                                G9Assembly.InstanceTools.CreateInstanceFromType(
-                                    (Type)CustomParserInstanceCollection[genericType]);
+                            Item1 = (o, t, m) =>
+                            {
+                                // Create instance of parser
+                                var instance =
+                                    G9Assembly.InstanceTools.CreateInstanceFromType(
+                                        (Type)CustomParserInstanceCollection[targetTypeForParsing]);
 
-                            var methods = G9Assembly.ObjectAndReflectionTools.GetMethodsOfObject(instance,
-                                G9EAccessModifier.StaticAndInstance | G9EAccessModifier.Public,
-                                s => s.Name == nameof(G9ACustomTypeParser<object>.StringToObject) &&
-                                     MethodValidation(s, genericType));
+                                var methods = G9Assembly.ObjectAndReflectionTools.GetMethodsOfObject(instance,
+                                    G9EAccessModifier.StaticAndInstance | G9EAccessModifier.Public,
+                                    s => s.Name == nameof(G9ACustomTypeParser<object>.StringToObject) &&
+                                         MethodValidation(s, targetTypeForParsing));
 
-                            return methods[0].CallMethodWithResult<object>(o, m);
-                        },
-                        Item2 = (o, m) =>
+                                return methods[0].CallMethodWithResult<object>(o, m);
+                            },
+                            Item2 = (o, t, m) =>
+                            {
+                                // Create instance of parser
+                                var instance =
+                                    G9Assembly.InstanceTools.CreateInstanceFromType(
+                                        (Type)CustomParserInstanceCollection[targetTypeForParsing]);
+
+                                var methods = G9Assembly.ObjectAndReflectionTools.GetMethodsOfObject(instance,
+                                    G9EAccessModifier.StaticAndInstance | G9EAccessModifier.Public,
+                                    s => s.Name == nameof(G9ACustomTypeParser<object>.ObjectToString) &&
+                                         MethodValidation(s, targetTypeForParsing));
+
+                                return methods[0].CallMethodWithResult<object>(o, m);
+                            }
+                        };
+                    else
+                        access = new G9DtTuple<Func<object, Type, G9IMemberGetter, object>>
                         {
-                            // Create instance of parser
-                            var instance =
-                                G9Assembly.InstanceTools.CreateInstanceFromType(
-                                    (Type)CustomParserInstanceCollection[genericType]);
+                            Item1 = (o, t, m) =>
+                            {
+                                // Create instance of parser
+                                var instance =
+                                    G9Assembly.InstanceTools.CreateInstanceFromType(
+                                        (Type)CustomParserInstanceCollection[targetTypeForParsing]);
 
-                            var methods = G9Assembly.ObjectAndReflectionTools.GetMethodsOfObject(instance,
-                                G9EAccessModifier.StaticAndInstance | G9EAccessModifier.Public,
-                                s => s.Name == nameof(G9ACustomTypeParser<object>.ObjectToString) &&
-                                     MethodValidation(s, genericType));
+                                var methods = G9Assembly.ObjectAndReflectionTools.GetMethodsOfObject(instance,
+                                    G9EAccessModifier.StaticAndInstance | G9EAccessModifier.Public,
+                                    s => s.Name == nameof(G9ACustomGenericTypeParser.StringToObject) &&
+                                         MethodValidationForGenericTypes(s));
 
-                            return methods[0].CallMethodWithResult<object>(o, m);
-                        }
-                    };
+                                return methods[0].CallMethodWithResult<object>(o, t.GetGenericArguments(), m);
+                            },
+                            Item2 = (o, t, m) =>
+                            {
+                                // Create instance of parser
+                                var instance =
+                                    G9Assembly.InstanceTools.CreateInstanceFromType(
+                                        (Type)CustomParserInstanceCollection[targetTypeForParsing]);
+
+                                var methods = G9Assembly.ObjectAndReflectionTools.GetMethodsOfObject(instance,
+                                    G9EAccessModifier.StaticAndInstance | G9EAccessModifier.Public,
+                                    s => s.Name == nameof(G9ACustomGenericTypeParser.ObjectToString) &&
+                                         MethodValidationForGenericTypes(s));
+
+                                return methods[0].CallMethodWithResult<object>(o, t.GetGenericArguments(), m);
+                            }
+                        };
                 }
                 else
                 {
                     // Add instance of parser
                     var instance = G9Assembly.InstanceTools.CreateInstanceFromType(parser);
-                    CustomParserInstanceCollection.Add(genericType, instance);
+                    CustomParserInstanceCollection.Add(targetTypeForParsing, instance);
 
-                    var methods = G9Assembly.ObjectAndReflectionTools.GetMethodsOfObject(instance,
-                        G9EAccessModifier.StaticAndInstance | G9EAccessModifier.Public,
-                        s => MethodValidation(s, genericType)).OrderByDescending(s => s.MethodName).ToArray();
-
-                    access = new G9DtTuple<Func<object, G9IMemberGetter, object>>
+                    if (parser.BaseType.IsGenericType)
                     {
-                        Item1 = (o, m) => methods[0].CallMethodWithResult<object>(o, m),
-                        Item2 = (o, m) => methods[1].CallMethodWithResult<object>(o, m)
-                    };
+                        var methods = G9Assembly.ObjectAndReflectionTools.GetMethodsOfObject(instance,
+                                G9EAccessModifier.StaticAndInstance | G9EAccessModifier.Public,
+                                s => MethodValidation(s, targetTypeForParsing)).OrderByDescending(s => s.MethodName)
+                            .ToDictionary(s => s.MethodName);
+
+                        access = new G9DtTuple<Func<object, Type, G9IMemberGetter, object>>
+                        {
+                            Item1 = (o, t, m) =>
+                                methods[nameof(G9ACustomTypeParser<object>.StringToObject)]
+                                    .CallMethodWithResult<object>(o, m),
+                            Item2 = (o, t, m) =>
+                                methods[nameof(G9ACustomTypeParser<object>.ObjectToString)]
+                                    .CallMethodWithResult<object>(o, m)
+                        };
+                    }
+                    else
+                    {
+                        var methods = G9Assembly.ObjectAndReflectionTools.GetMethodsOfObject(instance,
+                                G9EAccessModifier.StaticAndInstance | G9EAccessModifier.Public,
+                                MethodValidationForGenericTypes).OrderByDescending(s => s.MethodName)
+                            .ToDictionary(s => s.MethodName);
+
+                        access = new G9DtTuple<Func<object, Type, G9IMemberGetter, object>>
+                        {
+                            Item1 = (o, t, m) =>
+                                methods[nameof(G9ACustomGenericTypeParser.StringToObject)]
+                                    .CallMethodWithResult<object>(o, t.GetGenericArguments(), m),
+                            Item2 = (o, t, m) =>
+                                methods[nameof(G9ACustomGenericTypeParser.ObjectToString)]
+                                    .CallMethodWithResult<object>(o, t.GetGenericArguments(), m)
+                        };
+                    }
                 }
 
-                CustomParserCollection.Add(genericType, access);
+                CustomParserCollection.Add(targetTypeForParsing, access);
             }
         }
-
 
         /// <summary>
         ///     Helper method to check validation of parser methods
@@ -155,6 +234,51 @@ Second parser for type '{genericType.FullName}': ''{parser.FullName}");
                 // This parser method must have two parameter like below.
                 return parameters[0].ParameterType == targetObjectType &&
                        parameters[1].ParameterType == typeof(G9IMemberGetter);
+            }
+
+            return false;
+        }
+
+        /// <summary>
+        ///     Helper method to check validation of parser methods for generic types
+        /// </summary>
+        /// <param name="method">Access to method info</param>
+        private static bool MethodValidationForGenericTypes(MethodInfo method)
+        {
+            if (method.Name == nameof(G9ACustomGenericTypeParser.StringToObject))
+            {
+                var parameters = method.GetParameters();
+
+                // For both parser methods the parameters must be two
+                if (parameters.Length != 3)
+                    return false;
+
+                // This parser method must have a return type like target type
+                if (method.ReturnType != typeof(object))
+                    return false;
+
+                // This parser method must have two parameter like below.
+                return parameters[0].ParameterType == typeof(string) &&
+                       parameters[1].ParameterType == typeof(Type[]) &&
+                       parameters[2].ParameterType == typeof(G9IMemberGetter);
+            }
+
+            if (method.Name == nameof(G9ACustomGenericTypeParser.ObjectToString))
+            {
+                var parameters = method.GetParameters();
+
+                // For both parser methods the parameters must be two
+                if (parameters.Length != 3)
+                    return false;
+
+                // This parser method must have a return string type
+                if (method.ReturnType != typeof(string))
+                    return false;
+
+                // This parser method must have two parameter like below.
+                return parameters[0].ParameterType == typeof(object) &&
+                       parameters[1].ParameterType == typeof(Type[]) &&
+                       parameters[2].ParameterType == typeof(G9IMemberGetter);
             }
 
             return false;
