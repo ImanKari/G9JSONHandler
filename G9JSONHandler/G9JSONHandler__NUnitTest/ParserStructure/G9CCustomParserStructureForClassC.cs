@@ -14,7 +14,7 @@ namespace G9JSONHandler_NUnitTest.ParserStructure
 
         public override G9CClassC StringToObject(string stringForParsing, G9IMemberGetter accessToObjectMember)
         {
-            var data = stringForParsing.Split("-");
+            var data = stringForParsing.Split('-');
             return new G9CClassC
             {
                 A = data[0],

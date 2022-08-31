@@ -18,29 +18,37 @@ namespace G9JSONHandler_NUnitTest.ParserStructure
         {
             var fields = G9Assembly.ObjectAndReflectionTools.GetFieldsOfObject(objectForParsing)
                 .ToDictionary(s => s.Name);
-            return fields[nameof(G9CClassD<object>.A)].GetValue<string>() + "-" +
-                   (genericTypes[0] == typeof(int)
-                       ? 99
-                       : genericTypes[0] == typeof(decimal)
-                           ? fields[nameof(G9CClassD<object>.B)].GetValue<decimal>()
-                               .ToString(CultureInfo.InvariantCulture)
-                           : "None");
+
+            var extraData = string.Empty;
+            if (genericTypes[0] == typeof(int))
+                extraData = "99";
+            else if (genericTypes[0] == typeof(decimal))
+                extraData = fields[nameof(G9CClassD<object>.B)].GetValue<decimal>()
+                    .ToString(CultureInfo.InvariantCulture);
+            else
+                extraData = "None";
+
+            return fields[nameof(G9CClassD<object>.A)].GetValue<string>() + "-" + extraData;
         }
 
         public override object StringToObject(string stringForParsing, Type[] genericTypes,
             G9IMemberGetter accessToObjectMember)
         {
-            var data = stringForParsing.Split("-");
+            var data = stringForParsing.Split('-');
             var instance =
                 G9Assembly.InstanceTools.CreateInstanceFromGenericType(typeof(G9CClassD<>), genericTypes);
             var fields = G9Assembly.ObjectAndReflectionTools.GetFieldsOfObject(instance).ToDictionary(s => s.Name);
             fields[nameof(G9CClassD<object>.A)].SetValue(data[0]);
-            fields[nameof(G9CClassD<object>.B)].SetValue(genericTypes[0] == typeof(int)
-                ? int.Parse(data[1])
-                : genericTypes[0] == typeof(decimal)
-                    ? decimal.Parse(data[1])
-                    : data[1]
-            );
+
+            object extraData = null;
+            if (genericTypes[0] == typeof(int))
+                extraData = int.Parse(data[1]);
+            else if (genericTypes[0] == typeof(decimal))
+                extraData = decimal.Parse(data[1]);
+            else
+                extraData = data[1];
+
+            fields[nameof(G9CClassD<object>.B)].SetValue(extraData);
             return instance;
         }
     }

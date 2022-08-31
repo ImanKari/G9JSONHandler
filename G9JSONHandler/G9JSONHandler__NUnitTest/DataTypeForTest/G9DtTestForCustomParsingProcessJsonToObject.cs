@@ -48,20 +48,20 @@ namespace G9JSONHandler_NUnitTest.DataTypeForTest
         /// </summary>
         [G9AttrJsonMemberCustomParser(true, typeof(G9CCustomParserJsonToObject1),
             nameof(G9CCustomParserJsonToObject1.StringToObject))]
-        public TestObject TestObject1 = new();
+        public TestObject TestObject1 = new TestObject();
 
         /// <summary>
         ///     Test with standard object and static methods
         /// </summary>
         [G9AttrJsonMemberCustomParser(true, typeof(G9CCustomParserJsonToObject2),
             nameof(G9CCustomParserJsonToObject2.StringToObject))]
-        public TestObject TestObject2 = new();
+        public TestObject TestObject2 = new TestObject();
 
         /// <summary>
         ///     Test with static object and static methods
         /// </summary>
         [G9AttrJsonMemberCustomParser(true, typeof(G9CCustomParserJsonToObject3),
             nameof(G9CCustomParserJsonToObject3.StringToObject))]
-        public TestObject TestObject3 = new();
+        public TestObject TestObject3 = new TestObject();
     }
 }

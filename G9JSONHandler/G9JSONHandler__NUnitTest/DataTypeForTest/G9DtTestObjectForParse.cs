@@ -26,12 +26,12 @@ namespace G9JSONHandler_NUnitTest.DataTypeForTest
         };
 
         [G9AttrJsonComment("1- This note comment is used just for tests!")]
-        public G9DtCustomObject CustomObject = new();
+        public G9DtCustomObject CustomObject = new G9DtCustomObject();
 
         [G9AttrJsonComment("1- This note comment is used just for tests!")]
         [G9AttrJsonComment("2- This note comment is used just for tests!")]
         [G9AttrJsonComment("3- This note comment is used just for tests!")]
-        public G9DtDotNetBuiltInTypes DotNetBuiltInTypes = new();
+        public G9DtDotNetBuiltInTypes DotNetBuiltInTypes = new G9DtDotNetBuiltInTypes();
 
         [G9AttrJsonStoreEnumAsString] [G9AttrJsonMemberCustomName("ChangeToCustomName")]
         public Gender Gender = Gender.Unknown;

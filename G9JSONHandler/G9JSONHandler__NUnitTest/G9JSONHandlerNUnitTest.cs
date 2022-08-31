@@ -12,7 +12,13 @@ namespace G9JSONHandler_NUnitTest
 {
     public class G9JSONHandlerNUnitTest
     {
-        private readonly G9DtTestObjectForParse testObjectForParsing = new();
+#if NET35
+        private readonly bool _isDotNet35 = true;
+#else
+        private readonly bool _isDotNet35 = false;
+#endif
+
+        private readonly G9DtTestObjectForParse testObjectForParsing = new G9DtTestObjectForParse();
         private string testJSONString_Formatted = string.Empty;
         private string testJSONString_Unformatted = string.Empty;
 
@@ -169,7 +175,7 @@ namespace G9JSONHandler_NUnitTest
                 var newObject2 = formattedJson.G9JsonToObject<TestObject>();
                 Assert.True(newObject.Name == testObject.Name);
                 Assert.True(newObject2.Name == testObject.Name);
-            }, 99_999);
+            }, _isDotNet35 ? 999 : 99_999);
         }
 
         [Test]
@@ -186,8 +192,7 @@ namespace G9JSONHandler_NUnitTest
 
                 // Test custom parsing process for json to object (The custom values is set in custom parsing)
                 var objectFromJson = stringJson.G9JsonToObject<G9DtTestForCustomParsingProcess>();
-                Assert.True(objectFromJson is { TestObject1: { }, TestObject2: { }, TestObject3: { } } &&
-                            objectFromJson.TestObject1.Name == objectWithCustomParser.TestObject1.Name + "Okay" &&
+                Assert.True(objectFromJson.TestObject1.Name == objectWithCustomParser.TestObject1.Name + "Okay" &&
                             objectFromJson.TestObject2.Time ==
                             objectWithCustomParser.TestObject2.Time.Add(new TimeSpan(0, 9, 0)) &&
                             objectFromJson.TestObject3.Color == objectWithCustomParser.TestObject3.Color2 &&
@@ -200,8 +205,7 @@ namespace G9JSONHandler_NUnitTest
                 // Test custom parsing process just for object to json
                 var objectFromJsonObjectToString =
                     stringJson.G9JsonToObject<G9DtTestForCustomParsingProcessJsonToObject>();
-                Assert.True(objectFromJsonObjectToString is { TestObject1: { }, TestObject2: { }, TestObject3: { } } &&
-                            objectFromJsonObjectToString.TestObject1.Name ==
+                Assert.True(objectFromJsonObjectToString.TestObject1.Name ==
                             objectWithCustomParser.TestObject1.Name + "Okay" &&
                             objectFromJsonObjectToString.TestObject2.Time ==
                             objectWithCustomParser.TestObject2.Time.Add(new TimeSpan(0, 9, 0)) &&
@@ -215,7 +219,7 @@ namespace G9JSONHandler_NUnitTest
             TestCustomParser();
 
             // Multi-Thread test
-            G9Assembly.PerformanceTools.MultiThreadShockTest(_ => { TestCustomParser(); });
+            G9Assembly.PerformanceTools.MultiThreadShockTest(_ => { TestCustomParser(); }, _isDotNet35 ? 999 : 99_999);
 
             var testObject = new CustomObject();
             var jsonTestObject = testObject.G9ObjectToJson(true);
@@ -292,7 +296,7 @@ If the value structure is correct, it seems that the default parser can't parse 
 
                 // Test parsing object to json with auto encryption
                 var jsonData = objectWithEncryptionAttr.G9ObjectToJson(true);
-                Assert.True(jsonData.Contains("fESJe1TvMr00Q7BKTwVadg==") && jsonData.Contains("sWNkdxQ="));
+                Assert.True(jsonData.Contains("fESJe1TvMr00Q7BKTwVadg=="));
 
                 // Test parsing json to object with auto decryption
                 var objectData = jsonData.G9JsonToObject<G9DtSampleClassForEncryptionDecryption>();
@@ -301,7 +305,7 @@ If the value structure is correct, it seems that the default parser can't parse 
                             objectWithEncryptionAttr.Expire.ToString("s") == objectData.Expire.ToString("s"));
             }
 
-            G9Assembly.PerformanceTools.MultiThreadShockTest(TestEncryptionAttr, 99_999);
+            G9Assembly.PerformanceTools.MultiThreadShockTest(TestEncryptionAttr, _isDotNet35 ? 999 : 99_999);
         }
 
         [Test]
@@ -387,7 +391,7 @@ If the value structure is correct, it seems that the default parser can't parse 
 
             testCustomParserStructure(0);
 
-            G9Assembly.PerformanceTools.MultiThreadShockTest(testCustomParserStructure, 99_999);
+            G9Assembly.PerformanceTools.MultiThreadShockTest(testCustomParserStructure, _isDotNet35 ? 999 : 99_999);
         }
     }
 }

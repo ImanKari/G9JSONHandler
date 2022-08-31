@@ -44,7 +44,7 @@ namespace G9JSONHandler_NUnitTest.DataTypeForTest
         // the second parameter specifies the string to object method name, and the last one specifies the object to string method name.
         [G9AttrJsonMemberCustomParser(typeof(CustomParser), nameof(CustomParser.StringToObject),
             nameof(CustomParser.ObjectToString))]
-        public CustomChildObject CustomChild = new();
+        public CustomChildObject CustomChild = new CustomChildObject();
     }
 
     // Custom child object

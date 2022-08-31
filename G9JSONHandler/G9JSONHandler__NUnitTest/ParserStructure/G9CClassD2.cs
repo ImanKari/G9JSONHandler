@@ -4,7 +4,7 @@
     {
         public string A = "G9";
 
-        public G9CClassD<decimal> Extra = new()
+        public G9CClassD<decimal> Extra = new G9CClassD<decimal>()
         {
             A = "Okay",
             B = 9999.9999m

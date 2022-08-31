@@ -5,7 +5,7 @@
         public string A = "G9";
         public int B = 99;
 
-        public G9CClassA Extra = new();
+        public G9CClassA Extra = new G9CClassA();
 
     }
 }

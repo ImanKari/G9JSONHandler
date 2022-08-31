@@ -31,7 +31,7 @@ namespace G9JSONHandler_NUnitTest.DataTypeForTest
         public uint F6 = 19;
         public long F7 = 23;
         public ulong F8 = 26;
-        public TimeSpan G = new(9, 9, 9);
+        public TimeSpan G = new TimeSpan(9, 9, 9);
         public IPAddress H = IPAddress.Loopback;
 
     }
