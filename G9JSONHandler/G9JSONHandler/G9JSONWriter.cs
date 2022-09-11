@@ -267,19 +267,18 @@ namespace G9JSONHandler
 
                     // Write note comments if that existed
                     var fieldNoteComments = m.GetCustomAttributes<G9AttrJsonCommentAttribute>(true);
-                    if (fieldNoteComments.Any())
+                    if (fieldNoteComments != null)
                         foreach (var note in fieldNoteComments)
                             WriteJsonNoteComment(stringBuilder, note.CustomNote, note.IsNonstandardComment, tabsNumber,
                                 commentNumber++);
 
                     stringBuilder.Append('\"');
-                    var nameAttr = m.GetCustomAttributes<G9AttrJsonMemberCustomNameAttribute>(true);
-                    stringBuilder.Append(nameAttr.Any() ? nameAttr[0].Name : m.Name);
+                    var nameAttr = m.GetCustomAttribute<G9AttrJsonMemberCustomNameAttribute>(true);
+                    stringBuilder.Append(nameAttr != null ? nameAttr.Name : m.Name);
                     stringBuilder.Append(_separator);
 
                     // Check encryption/decryption attr
-                    var encryptionDecryption = m.GetCustomAttributes<G9AttrJsonMemberEncryptionAttribute>(true)
-                        .FirstOrDefault();
+                    var encryptionDecryption = m.GetCustomAttribute<G9AttrJsonMemberEncryptionAttribute>(true);
                     if (encryptionDecryption != null)
                         value = G9Assembly.CryptographyTools.AesEncryptString(value.ToString(),
                             encryptionDecryption.PrivateKey, encryptionDecryption.InitializationVector,
@@ -301,14 +300,13 @@ namespace G9JSONHandler
                     else
                     {
                         // Check custom parser for a member
-                        var customParser = m.GetCustomAttributes<G9AttrJsonMemberCustomParserAttribute>(true)
-                            .FirstOrDefault();
+                        var customParser = m.GetCustomAttribute<G9AttrJsonMemberCustomParserAttribute>(true);
                         if (customParser != null && customParser.ParserType != G9ECustomParserType.StringToObject)
                             ParseObjectMembersToJson(stringBuilder,
                                 customParser.ObjectToStringMethod.CallMethodWithResult<string>(value, m),
                                 ref tabsNumber);
                         else if (m.MemberType.IsEnum &&
-                                 m.GetCustomAttributes<G9AttrJsonStoreEnumAsStringAttribute>(true).Any())
+                                 m.GetCustomAttribute<G9AttrJsonStoreEnumAsStringAttribute>(true) != null)
                             ParseObjectMembersToJson(stringBuilder, value.ToString(), ref tabsNumber);
                         else
                             ParseObjectMembersToJson(stringBuilder, value, ref tabsNumber);

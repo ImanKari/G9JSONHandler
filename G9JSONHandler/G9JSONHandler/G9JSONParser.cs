@@ -5,7 +5,6 @@ using System.Globalization;
 using System.Linq;
 using System.Text;
 using G9AssemblyManagement;
-using G9AssemblyManagement.DataType;
 using G9AssemblyManagement.Enums;
 using G9AssemblyManagement.Interfaces;
 using G9JSONHandler.Attributes;
@@ -126,7 +125,6 @@ namespace G9JSONHandler
         /// <summary>
         ///     Method to split data
         /// </summary>
-        /// <param name="json">Specifies JSON data for splitting</param>
         /// <returns>A collection of split data</returns>
         private static List<string> Splitter(string json, bool appendUniqueCharacter = true)
         {
@@ -368,8 +366,8 @@ namespace G9JSONHandler
         {
             foreach (var m in members)
             {
-                var nameAttr = m.GetCustomAttributes<G9AttrJsonMemberCustomNameAttribute>(true);
-                dic.Add(nameAttr.Any() ? nameAttr[0].Name : m.Name, m);
+                var nameAttr = m.GetCustomAttribute<G9AttrJsonMemberCustomNameAttribute>(true);
+                dic.Add(nameAttr != null ? nameAttr.Name : m.Name, m);
             }
         }
 
@@ -435,16 +433,14 @@ namespace G9JSONHandler
                 if (!members.TryGetValue(key, out var memberInfo)) continue;
 
                 // Check encryption/decryption attr
-                var encryptionDecryption = memberInfo.GetCustomAttributes<G9AttrJsonMemberEncryptionAttribute>(true)
-                    .FirstOrDefault();
+                var encryptionDecryption = memberInfo.GetCustomAttribute<G9AttrJsonMemberEncryptionAttribute>(true);
                 if (encryptionDecryption != null)
                     value = G9Assembly.CryptographyTools.AesDecryptString(value,
                         encryptionDecryption.PrivateKey, encryptionDecryption.InitializationVector,
                         encryptionDecryption.AesConfig);
 
                 // Check custom parser for a member
-                var customParser = memberInfo.GetCustomAttributes<G9AttrJsonMemberCustomParserAttribute>(true)
-                    .FirstOrDefault();
+                var customParser = memberInfo.GetCustomAttribute<G9AttrJsonMemberCustomParserAttribute>(true);
 
                 try
                 {
