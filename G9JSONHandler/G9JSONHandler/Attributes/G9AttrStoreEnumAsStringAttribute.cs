@@ -3,12 +3,12 @@
 namespace G9JSONHandler.Attributes
 {
     /// <summary>
-    ///     This attribute is used to ignore a member of an object for parsing to JSON (Also ignored while reading).
+    ///     This attribute specifies that an "enum" value must convert as a string.
     /// </summary>
     [AttributeUsage(AttributeTargets.Property | AttributeTargets.Field,
         // ReSharper disable once RedundantAttributeUsageProperty
         AllowMultiple = false)]
-    public class G9AttrJsonIgnoreMemberAttribute : Attribute
+    public class G9AttrStoreEnumAsStringAttribute : Attribute
     {
     }
 }

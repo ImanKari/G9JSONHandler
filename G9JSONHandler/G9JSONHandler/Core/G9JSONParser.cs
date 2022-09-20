@@ -5,19 +5,19 @@ using System.Globalization;
 using System.Linq;
 using System.Text;
 using G9AssemblyManagement;
-using G9AssemblyManagement.Enums;
 using G9AssemblyManagement.Interfaces;
 using G9JSONHandler.Attributes;
 using G9JSONHandler.Common;
+using G9JSONHandler.DataType;
 using G9JSONHandler.Enum;
 
-namespace G9JSONHandler
+namespace G9JSONHandler.Core
 {
     /// <summary>
     ///     A pretty small library for JSON
     ///     A static helper class for parsing JSON
     /// </summary>
-    public static class G9JsonParser
+    internal static class G9JsonParser
     {
         [ThreadStatic] private static Stack<List<string>> _splitArrayPool;
         [ThreadStatic] private static StringBuilder _stringBuilder;
@@ -26,24 +26,23 @@ namespace G9JSONHandler
         ///     Specifies that if in the parsing process a mismatch occurs, the exception (mismatch) on the member that has it must
         ///     be ignored or not.
         /// </summary>
-        [ThreadStatic] private static bool _ignoreMismatching;
+        [ThreadStatic] private static G9DtJsonParserConfig _parserConfig;
 
         /// <summary>
         ///     Method to convert a JSON string to an Object.
         /// </summary>
-        /// <typeparam name="T">Specifies the type of object.</typeparam>
+        /// <typeparam name="TType">Specifies the type of object.</typeparam>
         /// <param name="json">Specifies JSON string for conversion.</param>
-        /// <param name="ignoreMismatching">
-        ///     Specifies that if in the parsing process a mismatch occurs, the exception (mismatch) on
-        ///     the member that has it must be ignored or not.
+        /// <param name="parserConfig">
+        ///     Specifies a custom config for the parsing process.
         /// </param>
         /// <returns>An object that is converted by JSON string.</returns>
-        public static T G9JsonToObject<T>(this string json, bool ignoreMismatching = false)
+        public static TType G9JsonToObject<TType>(string json, G9DtJsonParserConfig parserConfig)
         {
             if (_stringBuilder == null) _stringBuilder = new StringBuilder();
             if (_splitArrayPool == null) _splitArrayPool = new Stack<List<string>>();
 
-            _ignoreMismatching = ignoreMismatching;
+            _parserConfig = parserConfig;
 
             //Remove all whitespace not within strings to make parsing simpler
             _stringBuilder.Length = 0;
@@ -85,7 +84,7 @@ namespace G9JSONHandler
             }
 
             // The method parses the pure JSON data
-            return (T)ParsePureJsonData(typeof(T), _stringBuilder.ToString());
+            return (TType)ParsePureJsonData(typeof(TType), _stringBuilder.ToString());
         }
 
         /// <summary>
@@ -366,7 +365,7 @@ namespace G9JSONHandler
         {
             foreach (var m in members)
             {
-                var nameAttr = m.GetCustomAttribute<G9AttrJsonMemberCustomNameAttribute>(true);
+                var nameAttr = m.GetCustomAttribute<G9AttrCustomNameAttribute>(true);
                 dic.Add(nameAttr != null ? nameAttr.Name : m.Name, m);
             }
         }
@@ -395,7 +394,7 @@ namespace G9JSONHandler
             catch (Exception e)
             {
                 // Continue on exception if ignore mismatching is true
-                if (_ignoreMismatching)
+                if (_parserConfig.IgnoreMismatching)
                     return G9Assembly.InstanceTools.CreateUninitializedInstanceFromType(type);
 
                 // Generate a readable exception
@@ -415,13 +414,13 @@ namespace G9JSONHandler
 
             // Prepare Fields
             CreateDictionaryOfMembers(ref members,
-                G9Assembly.ObjectAndReflectionTools.GetFieldsOfObject(instance, G9EAccessModifier.Public,
-                    s => !s.GetCustomAttributes(typeof(G9AttrJsonIgnoreMemberAttribute), true).Any()));
+                G9Assembly.ObjectAndReflectionTools.GetFieldsOfObject(instance, _parserConfig.AccessibleModifiers,
+                    s => !s.GetCustomAttributes(typeof(G9AttrIgnoreAttribute), true).Any()));
 
             // Prepare Properties
             CreateDictionaryOfMembers(ref members,
-                G9Assembly.ObjectAndReflectionTools.GetPropertiesOfObject(instance, G9EAccessModifier.Public,
-                    s => s.CanWrite && !s.GetCustomAttributes(typeof(G9AttrJsonIgnoreMemberAttribute), true).Any()));
+                G9Assembly.ObjectAndReflectionTools.GetPropertiesOfObject(instance, _parserConfig.AccessibleModifiers,
+                    s => s.CanWrite && !s.GetCustomAttributes(typeof(G9AttrIgnoreAttribute), true).Any()));
 
             for (var i = 0; i < elems.Count; i += 2)
             {
@@ -433,14 +432,14 @@ namespace G9JSONHandler
                 if (!members.TryGetValue(key, out var memberInfo)) continue;
 
                 // Check encryption/decryption attr
-                var encryptionDecryption = memberInfo.GetCustomAttribute<G9AttrJsonMemberEncryptionAttribute>(true);
+                var encryptionDecryption = memberInfo.GetCustomAttribute<G9AttrEncryptionAttribute>(true);
                 if (encryptionDecryption != null)
                     value = G9Assembly.CryptographyTools.AesDecryptString(value,
                         encryptionDecryption.PrivateKey, encryptionDecryption.InitializationVector,
                         encryptionDecryption.AesConfig);
 
                 // Check custom parser for a member
-                var customParser = memberInfo.GetCustomAttribute<G9AttrJsonMemberCustomParserAttribute>(true);
+                var customParser = memberInfo.GetCustomAttribute<G9AttrCustomParserAttribute>(true);
 
                 try
                 {
@@ -465,7 +464,7 @@ namespace G9JSONHandler
                 catch (Exception e)
                 {
                     // Continue on exception if ignore mismatching is true
-                    if (_ignoreMismatching) continue;
+                    if (_parserConfig.IgnoreMismatching) continue;
 
                     // Generate a readable exception
                     if (G9CJsonCommon.CustomParserCollection != null &&
@@ -481,7 +480,7 @@ namespace G9JSONHandler
                             e);
                     throw new Exception(
                         $@"An exception occurred when the parser tried to parse the value '{value}' for member '{memberInfo.Name}' in type '{type.FullName}'.
-If the value structure is correct, it seems that the default parser can't parse it, so that you can implement a custom parser for this type with the attribute '{nameof(G9AttrJsonMemberCustomParserAttribute)}'.",
+If the value structure is correct, it seems that the default parser can't parse it, so that you can implement a custom parser for this type with the attribute '{nameof(G9AttrCustomParserAttribute)}'.",
                         e);
                 }
             }

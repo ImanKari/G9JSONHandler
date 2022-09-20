@@ -13,12 +13,12 @@ namespace G9JSONHandler.Attributes
     ///     <para />
     ///     Note: If your member data type is complex, or you need to implement the custom encryption process, you can
     ///     implement a custom (encryption/decryption) process with the attribute
-    ///     <see cref="G9AttrJsonMemberCustomParserAttribute" />.
+    ///     <see cref="G9AttrCustomParserAttribute" />.
     /// </summary>
     [AttributeUsage(AttributeTargets.Property | AttributeTargets.Field,
         // ReSharper disable once RedundantAttributeUsageProperty
         AllowMultiple = false)]
-    public class G9AttrJsonMemberEncryptionAttribute : Attribute
+    public class G9AttrEncryptionAttribute : Attribute
     {
         /// <summary>
         ///     Specifies the custom config for aes encryption/decryption
@@ -48,7 +48,7 @@ namespace G9JSONHandler.Attributes
         ///     Specifies that if the key size isn't standard. The process must fix it or not. (With
         ///     an arbitrary process)
         /// </param>
-        public G9AttrJsonMemberEncryptionAttribute(string privateKey, string iv,
+        public G9AttrEncryptionAttribute(string privateKey, string iv,
             PaddingMode paddingMode = PaddingMode.PKCS7,
             CipherMode cipherMode = CipherMode.CBC, int keySize = 128, int blockSize = 128,
             bool enableAutoFixKeySize = false)

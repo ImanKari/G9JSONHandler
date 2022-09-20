@@ -15,7 +15,7 @@ namespace G9JSONHandler_NUnitTest.DataTypeForTest
     public class G9DtSmallSampleClassCustomParse
     {
         public string Name = "Iman";
-        [G9AttrJsonMemberCustomParser(true, typeof(CustomParserTest), nameof(CustomParserTest.StringToObject))]
+        [G9AttrCustomParser(true, typeof(CustomParserTest), nameof(CustomParserTest.StringToObject))]
         public int Age = 32;
 
         public ConsoleColor Color = ConsoleColor.DarkMagenta;

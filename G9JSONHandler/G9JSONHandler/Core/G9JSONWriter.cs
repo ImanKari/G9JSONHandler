@@ -4,19 +4,19 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using G9AssemblyManagement;
-using G9AssemblyManagement.Enums;
 using G9AssemblyManagement.Interfaces;
 using G9JSONHandler.Attributes;
 using G9JSONHandler.Common;
+using G9JSONHandler.DataType;
 using G9JSONHandler.Enum;
 
-namespace G9JSONHandler
+namespace G9JSONHandler.Core
 {
     /// <summary>
     ///     A pretty small library for JSON
     ///     A static helper class for writing JSON
     /// </summary>
-    public static class G9JsonWriter
+    internal static class G9JsonWriter
     {
         /// <summary>
         ///     Specifies the separator according to format mode.
@@ -26,20 +26,20 @@ namespace G9JSONHandler
         /// <summary>
         ///     Specifies that JSON result must be formatted or not
         /// </summary>
-        [ThreadStatic] private static bool _unformatted;
+        [ThreadStatic] private static G9DtJsonWriterConfig _writerConfig;
 
         /// <summary>
         ///     Method to convert any object to JSON
         /// </summary>
         /// <param name="objectItem">Specifies an object item for converting to JSON</param>
-        /// <param name="formatted">Specifies that JSON result must be formatted or not</param>
+        /// <param name="writerConfig">Specifies a custom config for the parsing process.</param>
         /// <returns>A string object that is filled by JSON</returns>
-        public static string G9ObjectToJson(this object objectItem, bool formatted = false)
+        public static string G9ObjectToJson(object objectItem, G9DtJsonWriterConfig writerConfig)
         {
-            _separator = formatted ? "\": " : "\":";
+            _writerConfig = writerConfig;
+            _separator = _writerConfig.IsFormatted ? "\": " : "\":";
             var stringBuilder = new StringBuilder();
             var tabsNumber = 0;
-            _unformatted = !formatted;
             ParseObjectMembersToJson(stringBuilder, objectItem, ref tabsNumber);
             return stringBuilder.ToString();
         }
@@ -147,7 +147,7 @@ namespace G9JSONHandler
         {
             if (objectItem is IList list)
             {
-                stringBuilder.Append(_unformatted
+                stringBuilder.Append(!_writerConfig.IsFormatted
                     ? "["
                     : $"\n{new string('\t', tabsNumber)}[\n{new string('\t', ++tabsNumber)}");
                 var isFirst = true;
@@ -156,11 +156,11 @@ namespace G9JSONHandler
                     if (isFirst)
                         isFirst = false;
                     else
-                        stringBuilder.Append(_unformatted ? "," : $",\n{new string('\t', tabsNumber)}");
+                        stringBuilder.Append(!_writerConfig.IsFormatted ? "," : $",\n{new string('\t', tabsNumber)}");
                     ParseObjectMembersToJson(stringBuilder, m, ref tabsNumber);
                 }
 
-                stringBuilder.Append(_unformatted
+                stringBuilder.Append(!_writerConfig.IsFormatted
                     ? "]"
                     : $"\n{new string('\t', --tabsNumber)}]");
             }
@@ -175,7 +175,7 @@ namespace G9JSONHandler
                     return;
                 }
 
-                if (_unformatted)
+                if (!_writerConfig.IsFormatted)
                     stringBuilder.Append('{');
                 else
                     stringBuilder.Append(stringBuilder.Length > 0
@@ -190,14 +190,15 @@ namespace G9JSONHandler
                         if (isFirst)
                             isFirst = false;
                         else
-                            stringBuilder.Append(_unformatted ? "," : $",\n{new string('\t', tabsNumber)}");
+                            stringBuilder.Append(
+                                !_writerConfig.IsFormatted ? "," : $",\n{new string('\t', tabsNumber)}");
                         stringBuilder.Append('\"');
                         stringBuilder.Append((string)key);
                         stringBuilder.Append(_separator);
                         ParseObjectMembersToJson(stringBuilder, dict[key], ref tabsNumber);
                     }
 
-                stringBuilder.Append(_unformatted ? "}" : $"\n{new string('\t', --tabsNumber)}}}");
+                stringBuilder.Append(!_writerConfig.IsFormatted ? "}" : $"\n{new string('\t', --tabsNumber)}}}");
             }
         }
 
@@ -215,13 +216,13 @@ namespace G9JSONHandler
 
             // Write note comments if that existed
             var noteComments =
-                (IList<G9AttrJsonCommentAttribute>)type.GetCustomAttributes(typeof(G9AttrJsonCommentAttribute), true);
+                (IList<G9AttrCommentAttribute>)type.GetCustomAttributes(typeof(G9AttrCommentAttribute), true);
             if (noteComments.Any())
                 foreach (var note in noteComments)
-                    WriteJsonNoteComment(stringBuilder, note.CustomNote, note.IsNonstandardComment, tabsNumber,
+                    WriteJsonNoteComment(stringBuilder, note.CustomNote, tabsNumber,
                         commentNumber++);
 
-            if (_unformatted)
+            if (!_writerConfig.IsFormatted)
                 stringBuilder.Append('{');
             else
                 stringBuilder.Append(stringBuilder.Length > 0 && stringBuilder[stringBuilder.Length - 1] != '\t'
@@ -245,12 +246,12 @@ namespace G9JSONHandler
             {
                 // Get total members
                 var objectMembers = G9Assembly.ObjectAndReflectionTools.GetFieldsOfObject(objectItem,
-                        G9EAccessModifier.Public,
-                        s => !s.GetCustomAttributes(typeof(G9AttrJsonIgnoreMemberAttribute), true).Any())
+                        _writerConfig.AccessibleModifiers,
+                        s => !s.GetCustomAttributes(typeof(G9AttrIgnoreAttribute), true).Any())
                     .Select(s => (G9IMember)s).Concat(
                         G9Assembly.ObjectAndReflectionTools.GetPropertiesOfObject(objectItem,
-                                G9EAccessModifier.Public,
-                                s => s.CanRead && !s.GetCustomAttributes(typeof(G9AttrJsonIgnoreMemberAttribute), true)
+                                _writerConfig.AccessibleModifiers,
+                                s => s.CanRead && !s.GetCustomAttributes(typeof(G9AttrIgnoreAttribute), true)
                                     .Any())
                             .Select(s => (G9IMember)s)
                     ).ToArray();
@@ -263,22 +264,22 @@ namespace G9JSONHandler
                     if (isFirst)
                         isFirst = false;
                     else
-                        stringBuilder.Append(_unformatted ? "," : $",\n{new string('\t', tabsNumber)}");
+                        stringBuilder.Append(!_writerConfig.IsFormatted ? "," : $",\n{new string('\t', tabsNumber)}");
 
                     // Write note comments if that existed
-                    var fieldNoteComments = m.GetCustomAttributes<G9AttrJsonCommentAttribute>(true);
+                    var fieldNoteComments = m.GetCustomAttributes<G9AttrCommentAttribute>(true);
                     if (fieldNoteComments != null)
                         foreach (var note in fieldNoteComments)
-                            WriteJsonNoteComment(stringBuilder, note.CustomNote, note.IsNonstandardComment, tabsNumber,
+                            WriteJsonNoteComment(stringBuilder, note.CustomNote, tabsNumber,
                                 commentNumber++);
 
                     stringBuilder.Append('\"');
-                    var nameAttr = m.GetCustomAttribute<G9AttrJsonMemberCustomNameAttribute>(true);
+                    var nameAttr = m.GetCustomAttribute<G9AttrCustomNameAttribute>(true);
                     stringBuilder.Append(nameAttr != null ? nameAttr.Name : m.Name);
                     stringBuilder.Append(_separator);
 
                     // Check encryption/decryption attr
-                    var encryptionDecryption = m.GetCustomAttribute<G9AttrJsonMemberEncryptionAttribute>(true);
+                    var encryptionDecryption = m.GetCustomAttribute<G9AttrEncryptionAttribute>(true);
                     if (encryptionDecryption != null)
                         value = G9Assembly.CryptographyTools.AesEncryptString(value.ToString(),
                             encryptionDecryption.PrivateKey, encryptionDecryption.InitializationVector,
@@ -300,13 +301,13 @@ namespace G9JSONHandler
                     else
                     {
                         // Check custom parser for a member
-                        var customParser = m.GetCustomAttribute<G9AttrJsonMemberCustomParserAttribute>(true);
+                        var customParser = m.GetCustomAttribute<G9AttrCustomParserAttribute>(true);
                         if (customParser != null && customParser.ParserType != G9ECustomParserType.StringToObject)
                             ParseObjectMembersToJson(stringBuilder,
                                 customParser.ObjectToStringMethod.CallMethodWithResult<string>(value, m),
                                 ref tabsNumber);
                         else if (m.MemberType.IsEnum &&
-                                 m.GetCustomAttribute<G9AttrJsonStoreEnumAsStringAttribute>(true) != null)
+                                 m.GetCustomAttribute<G9AttrStoreEnumAsStringAttribute>(true) != null)
                             ParseObjectMembersToJson(stringBuilder, value.ToString(), ref tabsNumber);
                         else
                             ParseObjectMembersToJson(stringBuilder, value, ref tabsNumber);
@@ -314,7 +315,7 @@ namespace G9JSONHandler
                 }
             }
 
-            stringBuilder.Append(_unformatted ? "}" : $"\n{new string('\t', --tabsNumber)}}}");
+            stringBuilder.Append(!_writerConfig.IsFormatted ? "}" : $"\n{new string('\t', --tabsNumber)}}}");
         }
 
         /// <summary>
@@ -322,18 +323,17 @@ namespace G9JSONHandler
         /// </summary>
         /// <param name="stringBuilder">specifies a StringBuilder object for storing JSON structure</param>
         /// <param name="noteComment">Specifies the note comment for writing</param>
-        /// <param name="isNonstandardComment">Specifies that comment is a nonstandard type</param>
         /// <param name="tabsNumber">If the formatted option is set to true, this parameter stores the nested tab number.</param>
         /// <param name="commentNumber">Specifies comment number in each object</param>
-        private static void WriteJsonNoteComment(StringBuilder stringBuilder, string noteComment,
-            bool isNonstandardComment, int tabsNumber, int commentNumber)
+        private static void WriteJsonNoteComment(StringBuilder stringBuilder, string noteComment, int tabsNumber,
+            int commentNumber)
         {
-            if (isNonstandardComment)
-                stringBuilder.Append(_unformatted
+            if (_writerConfig.CommentMode == G9ECommentMode.NonstandardMode)
+                stringBuilder.Append(!_writerConfig.IsFormatted
                     ? $"/* {noteComment} */"
                     : $"/* {noteComment} */\n{new string('\t', tabsNumber)}");
             else
-                stringBuilder.Append(_unformatted
+                stringBuilder.Append(!_writerConfig.IsFormatted
                     ? $"\"#__Comment{commentNumber}__#\":\"{noteComment}\","
                     : $"\"#__Comment{commentNumber}__#\": \"{PrepareCharactersForStoring(noteComment)}\",\n{new string('\t', tabsNumber)}");
         }
