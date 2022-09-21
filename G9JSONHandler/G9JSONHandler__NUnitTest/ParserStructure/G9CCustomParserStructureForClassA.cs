@@ -1,12 +1,14 @@
-﻿using G9AssemblyManagement.Interfaces;
+﻿using System;
+using G9AssemblyManagement.Interfaces;
 using G9JSONHandler.Abstract;
 
 namespace G9JSONHandler_NUnitTest.ParserStructure
 {
     public class G9CCustomParserStructureForClassA : G9ACustomTypeParser<G9CClassA>
     {
-        public override string ObjectToString(G9CClassA objectForParsing, G9IMemberGetter accessToObjectMember)
+        public override string ObjectToString(G9CClassA objectForParsing, G9IMemberGetter accessToObjectMember, Action<string> addCustomComment)
         {
+            addCustomComment("This Comment added by custom comment process in custom parser.");
             return objectForParsing.A + "TM-" + (objectForParsing.B - 3);
         }
 

@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
 using System.Text;
+using System.Text.RegularExpressions;
 using G9AssemblyManagement;
 using G9AssemblyManagement.Interfaces;
 using G9JSONHandler.Attributes;
@@ -39,6 +40,12 @@ namespace G9JSONHandler.Core
         /// <returns>An object that is converted by JSON string.</returns>
         public static TType G9JsonToObject<TType>(string json, G9DtJsonParserConfig parserConfig)
         {
+            // Remove all comments (standard and nonstandard) before anything.
+            json = Regex.Replace(json,
+                @"(\/\*[^\*\/]*\*\/)|(""#__Comment[^,]*"",)",
+                string.Empty,
+                RegexOptions.ECMAScript);
+
             if (_stringBuilder == null) _stringBuilder = new StringBuilder();
             if (_splitArrayPool == null) _splitArrayPool = new Stack<List<string>>();
 
@@ -389,7 +396,7 @@ namespace G9JSONHandler.Core
                         : type))
                     return G9CJsonCommon
                         .CustomParserCollection[type.IsGenericType ? type.GetGenericTypeDefinition() : type]
-                        .Item1(TrimStringSign(elems[0]), type, null);
+                        .Item1(TrimStringSign(elems[0]), type, null, null);
             }
             catch (Exception e)
             {
@@ -453,7 +460,7 @@ namespace G9JSONHandler.Core
                                 memberInfo.MemberType.IsGenericType
                                     ? memberInfo.MemberType.GetGenericTypeDefinition()
                                     : memberInfo.MemberType]
-                            .Item1(value, memberInfo.MemberType, memberInfo));
+                            .Item1(value, memberInfo.MemberType, memberInfo, null));
                     else if (customParser != null && customParser.ParserType != G9ECustomParserType.ObjectToJson)
                         memberInfo.SetValue(
                             customParser.StringToObjectMethod.CallMethodWithResult<object>(value,

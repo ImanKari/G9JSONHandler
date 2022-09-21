@@ -1,4 +1,5 @@
-﻿using G9AssemblyManagement.Interfaces;
+﻿using System;
+using G9AssemblyManagement.Interfaces;
 using G9JSONHandler.Abstract;
 
 namespace G9JSONHandler_NUnitTest.ParserStructure
@@ -7,7 +8,7 @@ namespace G9JSONHandler_NUnitTest.ParserStructure
     {
         private int _testNumber = 3;
 
-        public override string ObjectToString(G9CClassC objectForParsing, G9IMemberGetter accessToObjectMember)
+        public override string ObjectToString(G9CClassC objectForParsing, G9IMemberGetter accessToObjectMember, Action<string> addCustomComment)
         {
             return objectForParsing.A + "TM-" + (objectForParsing.B - _testNumber--);
         }

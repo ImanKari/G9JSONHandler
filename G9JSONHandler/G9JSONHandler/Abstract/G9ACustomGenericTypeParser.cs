@@ -37,9 +37,16 @@ namespace G9JSONHandler.Abstract
         ///     An object consists of helpful information about a member (field or property) in the
         ///     main object.
         /// </param>
+        /// <param name="addCustomComment">
+        ///     A callback action that sets a comment for the specified member if needed.
+        ///     <para />
+        ///     Using that leads to making a comment before this member in the string structure.
+        ///     <para />
+        ///     Using of that is optional; it can be used several times or not used at all.
+        /// </param>
         /// <returns>Parsed string value from specified generic object.</returns>
         public abstract string ObjectToString(object objectForParsing, Type[] genericTypes,
-            G9IMemberGetter accessToObjectMember);
+            G9IMemberGetter accessToObjectMember, Action<string> addCustomComment);
 
         /// <summary>
         ///     Method to parse a string to a generic object.

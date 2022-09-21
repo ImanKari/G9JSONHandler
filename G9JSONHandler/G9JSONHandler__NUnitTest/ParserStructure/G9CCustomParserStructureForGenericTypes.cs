@@ -14,8 +14,12 @@ namespace G9JSONHandler_NUnitTest.ParserStructure
         }
 
         public override string ObjectToString(object objectForParsing, Type[] genericTypes,
-            G9IMemberGetter accessToObjectMember)
+            G9IMemberGetter accessToObjectMember, Action<string> addCustomComment)
         {
+            addCustomComment("This Comment added by custom comment process in custom parser. Test 1.");
+            addCustomComment("This Comment added by custom comment process in custom parser. Test 2.");
+            addCustomComment("This Comment added by custom comment process in custom parser. Test 3.");
+
             var fields = G9Assembly.ObjectAndReflectionTools.GetFieldsOfObject(objectForParsing)
                 .ToDictionary(s => s.Name);
 

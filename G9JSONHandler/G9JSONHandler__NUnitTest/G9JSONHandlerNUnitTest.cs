@@ -1,5 +1,4 @@
 using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Net;
 using System.Reflection;
@@ -23,6 +22,7 @@ namespace G9JSONHandler_NUnitTest
         private readonly bool _isDotNet35 = false;
 #endif
 
+        // ReSharper disable once ArrangeObjectCreationWhenTypeEvident
         private readonly G9DtTestObjectForParse testObjectForParsing = new G9DtTestObjectForParse();
         private string testJSONString_Formatted = string.Empty;
         private string testJSONString_Unformatted = string.Empty;
@@ -59,16 +59,21 @@ namespace G9JSONHandler_NUnitTest
                         testObjectForParsing.AAA[2].C == false && testObjectForParsing.AAA[2].B == 3);
 
             // Converting to JSON by unformatted type
-            testJSONString_Unformatted = G9JSON.ObjectToJson(testObjectForParsing, new G9DtJsonWriterConfig(commentMode: G9ECommentMode.NonstandardMode));
+            testJSONString_Unformatted = G9JSON.ObjectToJson(testObjectForParsing,
+                new G9DtJsonWriterConfig(commentMode: G9ECommentMode.StandardMode));
             Assert.False(string.IsNullOrEmpty(testJSONString_Unformatted));
 
             // Converting to JSON by formatted type
             testJSONString_Formatted = G9JSON.ObjectToJson(testObjectForParsing,
-                new G9DtJsonWriterConfig(G9EAccessModifier.Public, true, G9ECommentMode.NonstandardMode));
+                new G9DtJsonWriterConfig(G9EAccessModifier.Public,
+                    true, G9ECommentMode.NonstandardMode));
             Assert.False(string.IsNullOrEmpty(testJSONString_Formatted));
 
             var nonstandardComment = "/* 1- This note comment is used just for tests! Nonstandard Type! */";
-            Assert.True(testJSONString_Unformatted.Contains(nonstandardComment) &&
+            var standardComment =
+                "\"#__Comment0__#\":\"1- This note comment is used just for tests! Nonstandard Type!\"";
+
+            Assert.True(testJSONString_Unformatted.Contains(standardComment) &&
                         testJSONString_Formatted.Contains(nonstandardComment));
         }
 
@@ -147,7 +152,8 @@ namespace G9JSONHandler_NUnitTest
             // Unformatted JSON
             var unformattedJson = G9JSON.ObjectToJson(testObject);
             // Formatted JSON
-            var formattedJson = G9JSON.ObjectToJson(testObject, new G9DtJsonWriterConfig(G9EAccessModifier.Public, true));
+            var formattedJson =
+                G9JSON.ObjectToJson(testObject, new G9DtJsonWriterConfig(G9EAccessModifier.Public, true));
 
             // Test
             var newObject = G9JSON.JsonToObject<TestObject>(unformattedJson);
@@ -176,7 +182,8 @@ namespace G9JSONHandler_NUnitTest
                     Name = $"Name {randomNumber}"
                 };
                 var unformattedJson = G9JSON.ObjectToJson(testObject);
-                var formattedJson = G9JSON.ObjectToJson(testObject, new G9DtJsonWriterConfig(G9EAccessModifier.Public, true));
+                var formattedJson =
+                    G9JSON.ObjectToJson(testObject, new G9DtJsonWriterConfig(G9EAccessModifier.Public, true));
                 var newObject = G9JSON.JsonToObject<TestObject>(unformattedJson);
                 var newObject2 = G9JSON.JsonToObject<TestObject>(formattedJson);
                 Assert.True(newObject.Name == testObject.Name);
@@ -193,7 +200,8 @@ namespace G9JSONHandler_NUnitTest
                 // Create an object that consists of custom parsing process
                 var objectWithCustomParser = new G9DtTestForCustomParsingProcess();
                 // Custom parsing process calls automatically in parsing
-                var stringJson = G9JSON.ObjectToJson(objectWithCustomParser, new G9DtJsonWriterConfig(G9EAccessModifier.Public, true));
+                var stringJson = G9JSON.ObjectToJson(objectWithCustomParser,
+                    new G9DtJsonWriterConfig(G9EAccessModifier.Public, true));
                 Assert.True(!string.IsNullOrEmpty(stringJson));
 
                 // Test custom parsing process for json to object (The custom values is set in custom parsing)
@@ -206,7 +214,8 @@ namespace G9JSONHandler_NUnitTest
 
                 // Test custom parsing process just for json to object
                 var objectWithCustomParserJsonToObject = new G9DtTestForCustomParsingProcessObjectToString();
-                stringJson = G9JSON.ObjectToJson(objectWithCustomParserJsonToObject, new G9DtJsonWriterConfig(G9EAccessModifier.Public, true));
+                stringJson = G9JSON.ObjectToJson(objectWithCustomParserJsonToObject,
+                    new G9DtJsonWriterConfig(G9EAccessModifier.Public, true));
 
                 // Test custom parsing process just for object to json
                 var objectFromJsonObjectToString =
@@ -228,7 +237,8 @@ namespace G9JSONHandler_NUnitTest
             G9Assembly.PerformanceTools.MultiThreadShockTest(_ => { TestCustomParser(); }, _isDotNet35 ? 999 : 99_999);
 
             var testObject = new CustomObject();
-            var jsonTestObject = G9JSON.ObjectToJson(testObject, new G9DtJsonWriterConfig(G9EAccessModifier.Public, true));
+            var jsonTestObject =
+                G9JSON.ObjectToJson(testObject, new G9DtJsonWriterConfig(G9EAccessModifier.Public, true));
             var parsedTestObject = G9JSON.JsonToObject<CustomObject>(jsonTestObject);
 
             Assert.True(parsedTestObject.CustomChild.Number1 == testObject.CustomChild.Number1 &&
@@ -282,10 +292,12 @@ If the value structure is correct, it seems that the default parser can't parse 
 
             // Ignore mismatching
             // both of them parsed without mismatch member
-            var object1 = G9JSON.JsonToObject<G9DtSmallSampleClassCustomParse>(json, new G9DtJsonParserConfig(G9EAccessModifier.Public, true));
+            var object1 = G9JSON.JsonToObject<G9DtSmallSampleClassCustomParse>(json,
+                new G9DtJsonParserConfig(G9EAccessModifier.Public, true));
             Assert.True(object1.Name == "32" && object1.Color == ConsoleColor.DarkMagenta &&
                         Equals(object1.Age, default(int)));
-            var object2 = G9JSON.JsonToObject<G9DtSmallSampleClassCustomParse>(json, new G9DtJsonParserConfig(G9EAccessModifier.Public, true));
+            var object2 = G9JSON.JsonToObject<G9DtSmallSampleClassCustomParse>(json,
+                new G9DtJsonParserConfig(G9EAccessModifier.Public, true));
             Assert.True(object2.Name == "32" && object2.Color == ConsoleColor.DarkMagenta &&
                         Equals(object2.Age, default(int)));
         }
@@ -301,7 +313,8 @@ If the value structure is correct, it seems that the default parser can't parse 
                 objectWithEncryptionAttr.Expire = DateTime.Now.AddDays(randomNumber);
 
                 // Test parsing object to json with auto encryption
-                var jsonData = G9JSON.ObjectToJson(objectWithEncryptionAttr, new G9DtJsonWriterConfig(G9EAccessModifier.Public, true));
+                var jsonData = G9JSON.ObjectToJson(objectWithEncryptionAttr,
+                    new G9DtJsonWriterConfig(G9EAccessModifier.Public, true));
                 Assert.True(jsonData.Contains("fESJe1TvMr00Q7BKTwVadg=="));
 
                 // Test parsing json to object with auto decryption
@@ -322,7 +335,11 @@ If the value structure is correct, it seems that the default parser can't parse 
             {
                 // Test setting a custom type parser on type G9CClassA.
                 var testClass = new G9CClassA();
-                var jsonData = G9JSON.ObjectToJson(testClass);
+
+                // Test added comment by parser
+                var jsonData = G9JSON.ObjectToJson(testClass,
+                    new G9DtJsonWriterConfig(isFormatted: true, commentMode: G9ECommentMode.NonstandardMode));
+                Assert.True(jsonData.Contains("This Comment added by custom comment process in custom parser."));
                 var objectData = G9JSON.JsonToObject<G9CClassA>(jsonData);
                 Assert.True(objectData.A == "G9TM" && objectData.B == 6);
 
@@ -363,7 +380,8 @@ If the value structure is correct, it seems that the default parser can't parse 
                 }
 
                 // Ignore mismatching
-                var objectTest = G9JSON.JsonToObject<G9CClassB>(jsonWrongData1, new G9DtJsonParserConfig(G9EAccessModifier.Public, true));
+                var objectTest = G9JSON.JsonToObject<G9CClassB>(jsonWrongData1,
+                    new G9DtJsonParserConfig(G9EAccessModifier.Public, true));
                 Assert.True(objectTest.A == "G9" && objectTest.B == 99 && objectTest.Extra == null);
 
 
@@ -375,21 +393,32 @@ If the value structure is correct, it seems that the default parser can't parse 
 
                 // Test setting a custom generic type parser on type G9CClassD
                 var testGenericClassA = new G9CClassD<int>();
-                var jsonDataGenericA = G9JSON.ObjectToJson(testGenericClassA);
-                Assert.True(jsonDataGenericA == "{\"G9-99\"}");
+                var jsonDataGenericA = G9JSON.ObjectToJson(testGenericClassA,
+                    new G9DtJsonWriterConfig(isFormatted: true, commentMode: G9ECommentMode.StandardMode));
+                Assert.True(jsonDataGenericA.Contains("\"G9-99\""));
                 var objectDataGenericA = G9JSON.JsonToObject<G9CClassD<int>>(jsonDataGenericA);
                 Assert.True(objectDataGenericA.A == "G9" && objectDataGenericA.B == 99);
 
                 var testGenericClassB = new G9CClassD<string>();
                 var jsonDataGenericB = G9JSON.ObjectToJson(testGenericClassB);
-                Assert.True(jsonDataGenericB == "{\"G9-None\"}");
+                Assert.True(jsonDataGenericB.Contains("{\"G9-None\"}"));
                 var objectDataGenericB = G9JSON.JsonToObject<G9CClassD<string>>(jsonDataGenericB);
                 Assert.True(objectDataGenericB.A == "G9" && objectDataGenericB.B == "None");
 
                 // Test setting a custom generic type parser on type G9CClassD as a child
                 var testGenericClassC = new G9CClassD2();
                 var jsonDataGenericC = G9JSON.ObjectToJson(testGenericClassC);
-                Assert.True(jsonDataGenericC == "{\"A\":\"G9\",\"Extra\":\"Okay-9999.9999\"}");
+                Assert.True(
+                    jsonDataGenericC.Contains(
+                        "This Comment added by custom comment process in custom parser. Test 1."));
+                Assert.True(
+                    jsonDataGenericC.Contains(
+                        "This Comment added by custom comment process in custom parser. Test 2."));
+                Assert.True(
+                    jsonDataGenericC.Contains(
+                        "This Comment added by custom comment process in custom parser. Test 3."));
+                Assert.True(jsonDataGenericC.Contains("\"A\":\"G9\"") &&
+                            jsonDataGenericC.Contains("\"Extra\":\"Okay-9999.9999\""));
                 var objectDataGenericC = G9JSON.JsonToObject<G9CClassD2>(jsonDataGenericC);
                 Assert.True(objectDataGenericC.A == "G9" && objectDataGenericC.Extra.A == "Okay" &&
                             objectDataGenericC.Extra.B == 9999.9999m);
@@ -412,7 +441,7 @@ If the value structure is correct, it seems that the default parser can't parse 
                             s.Name == nameof(G9CCustomParserStructureForGenericTypes)
                         ));
         }
-        
+
 
         [Test]
         [Order(9)]
@@ -427,14 +456,33 @@ If the value structure is correct, it seems that the default parser can't parse 
             Assert.That(jsonA, Is.EqualTo("{\"Age\":39}"));
 
             var objectJsonA = G9JSON.JsonToObject<G9DtPrivateMember>(jsonA);
-            Assert.True(objectJsonA.Age == 0 && objectJsonA.GetName() != privateObject.GetName() && objectJsonA.GetFamily() == privateObject.GetFamily());
+            Assert.True(objectJsonA.Age == 0 && objectJsonA.GetName() != privateObject.GetName() &&
+                        objectJsonA.GetFamily() == privateObject.GetFamily());
 
             // The second test, according to modifier, must have two fields and one property
             var jsonB = G9JSON.ObjectToJson(privateObject, new G9DtJsonWriterConfig(G9EAccessModifier.Everything));
-            Assert.That(jsonB, Is.EqualTo("{\"_name\":\"G9\",\"<Age>k__BackingField\":39,\"_family\":\"TM\",\"Age\":39}"));
+            Assert.That(jsonB,
+                Is.EqualTo("{\"_name\":\"G9\",\"<Age>k__BackingField\":39,\"_family\":\"TM\",\"Age\":39}"));
 
-            var objectJsonB = G9JSON.JsonToObject<G9DtPrivateMember>(jsonB, new G9DtJsonParserConfig(accessibleModifiers: G9EAccessModifier.Everything));
-            Assert.True(objectJsonB.Age == 39 && objectJsonB.GetName() == privateObject.GetName() && objectJsonB.GetFamily() == privateObject.GetFamily());
+            var objectJsonB =
+                G9JSON.JsonToObject<G9DtPrivateMember>(jsonB, new G9DtJsonParserConfig(G9EAccessModifier.Everything));
+            Assert.True(objectJsonB.Age == 39 && objectJsonB.GetName() == privateObject.GetName() &&
+                        objectJsonB.GetFamily() == privateObject.GetFamily());
+        }
+
+        [Test]
+        [Order(9)]
+        public void TestTheOrderAttributes()
+        {
+            var orderObject = new G9DtOrders();
+
+            var jsonOrder = G9JSON.ObjectToJson(orderObject, new G9DtJsonWriterConfig(isFormatted: true));
+
+            var lines = jsonOrder.Split('\n').Skip(1).Take(10).ToArray();
+            for (var i = 1; i <= 9; i++)
+                Assert.True(lines[i - 1].Contains($"\"Order{i}\": \"Order{i}\""));
+
+            Assert.True(lines.Last().Contains("\"WithoutOrder\": \"WithoutOrder\""));
         }
     }
 }

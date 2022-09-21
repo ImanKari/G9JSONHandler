@@ -15,7 +15,7 @@ namespace G9JSONHandler.Common
         /// <summary>
         ///     A collection for saving the Parser working process for use per each type
         /// </summary>
-        public static readonly Dictionary<Type, G9DtTuple<Func<object, Type, G9IMemberGetter, object>>>
+        public static readonly Dictionary<Type, G9DtTuple<Func<object, Type, G9IMemberGetter, Action<string>, object>>>
             CustomParserCollection;
 
         /// <summary>
@@ -43,7 +43,8 @@ namespace G9JSONHandler.Common
             // Initialize
             CustomParserInstanceCollection = new Dictionary<Type, object>(customTypeParsers.Length);
             CustomParserCollection =
-                new Dictionary<Type, G9DtTuple<Func<object, Type, G9IMemberGetter, object>>>(customTypeParsers.Length);
+                new Dictionary<Type, G9DtTuple<Func<object, Type, G9IMemberGetter, Action<string>, object>>>(
+                    customTypeParsers.Length);
 
             // The collection is completed by a loop
             // All parsers prepare for use.
@@ -77,7 +78,7 @@ First parser for type '{targetTypeForParsing.FullName}': '{CustomParserInstanceC
 Second parser for type '{targetTypeForParsing.FullName}': ''{parser.FullName}");
 
 
-                G9DtTuple<Func<object, Type, G9IMemberGetter, object>> access;
+                G9DtTuple<Func<object, Type, G9IMemberGetter, Action<string>, object>> access;
 
                 if ((parser.BaseType.IsGenericType && genericTypeDefinition == typeof(G9ACustomTypeParserUnique<>)) ||
                     parser.BaseType == typeof(G9ACustomGenericTypeParserUnique))
@@ -85,9 +86,9 @@ Second parser for type '{targetTypeForParsing.FullName}': ''{parser.FullName}");
                     CustomParserInstanceCollection.Add(targetTypeForParsing, parser);
 
                     if (parser.BaseType.IsGenericType)
-                        access = new G9DtTuple<Func<object, Type, G9IMemberGetter, object>>
+                        access = new G9DtTuple<Func<object, Type, G9IMemberGetter, Action<string>, object>>
                         {
-                            Item1 = (o, t, m) =>
+                            Item1 = (o, t, m, a) =>
                             {
                                 // Create instance of parser
                                 var instance =
@@ -101,7 +102,7 @@ Second parser for type '{targetTypeForParsing.FullName}': ''{parser.FullName}");
 
                                 return methods[0].CallMethodWithResult<object>(o, m);
                             },
-                            Item2 = (o, t, m) =>
+                            Item2 = (o, t, m, a) =>
                             {
                                 // Create instance of parser
                                 var instance =
@@ -113,13 +114,13 @@ Second parser for type '{targetTypeForParsing.FullName}': ''{parser.FullName}");
                                     s => s.Name == nameof(G9ACustomTypeParser<object>.ObjectToString) &&
                                          MethodValidation(s, targetTypeForParsing));
 
-                                return methods[0].CallMethodWithResult<object>(o, m);
+                                return methods[0].CallMethodWithResult<object>(o, m, a);
                             }
                         };
                     else
-                        access = new G9DtTuple<Func<object, Type, G9IMemberGetter, object>>
+                        access = new G9DtTuple<Func<object, Type, G9IMemberGetter, Action<string>, object>>
                         {
-                            Item1 = (o, t, m) =>
+                            Item1 = (o, t, m, a) =>
                             {
                                 // Create instance of parser
                                 var instance =
@@ -133,7 +134,7 @@ Second parser for type '{targetTypeForParsing.FullName}': ''{parser.FullName}");
 
                                 return methods[0].CallMethodWithResult<object>(o, t.GetGenericArguments(), m);
                             },
-                            Item2 = (o, t, m) =>
+                            Item2 = (o, t, m, a) =>
                             {
                                 // Create instance of parser
                                 var instance =
@@ -145,7 +146,7 @@ Second parser for type '{targetTypeForParsing.FullName}': ''{parser.FullName}");
                                     s => s.Name == nameof(G9ACustomGenericTypeParser.ObjectToString) &&
                                          MethodValidationForGenericTypes(s));
 
-                                return methods[0].CallMethodWithResult<object>(o, t.GetGenericArguments(), m);
+                                return methods[0].CallMethodWithResult<object>(o, t.GetGenericArguments(), m, a);
                             }
                         };
                 }
@@ -162,14 +163,14 @@ Second parser for type '{targetTypeForParsing.FullName}': ''{parser.FullName}");
                                 s => MethodValidation(s, targetTypeForParsing)).OrderByDescending(s => s.MethodName)
                             .ToDictionary(s => s.MethodName);
 
-                        access = new G9DtTuple<Func<object, Type, G9IMemberGetter, object>>
+                        access = new G9DtTuple<Func<object, Type, G9IMemberGetter, Action<string>, object>>
                         {
-                            Item1 = (o, t, m) =>
+                            Item1 = (o, t, m, a) =>
                                 methods[nameof(G9ACustomTypeParser<object>.StringToObject)]
                                     .CallMethodWithResult<object>(o, m),
-                            Item2 = (o, t, m) =>
+                            Item2 = (o, t, m, a) =>
                                 methods[nameof(G9ACustomTypeParser<object>.ObjectToString)]
-                                    .CallMethodWithResult<object>(o, m)
+                                    .CallMethodWithResult<object>(o, m, a)
                         };
                     }
                     else
@@ -179,14 +180,14 @@ Second parser for type '{targetTypeForParsing.FullName}': ''{parser.FullName}");
                                 MethodValidationForGenericTypes).OrderByDescending(s => s.MethodName)
                             .ToDictionary(s => s.MethodName);
 
-                        access = new G9DtTuple<Func<object, Type, G9IMemberGetter, object>>
+                        access = new G9DtTuple<Func<object, Type, G9IMemberGetter, Action<string>, object>>
                         {
-                            Item1 = (o, t, m) =>
+                            Item1 = (o, t, m, a) =>
                                 methods[nameof(G9ACustomGenericTypeParser.StringToObject)]
                                     .CallMethodWithResult<object>(o, t.GetGenericArguments(), m),
-                            Item2 = (o, t, m) =>
+                            Item2 = (o, t, m, a) =>
                                 methods[nameof(G9ACustomGenericTypeParser.ObjectToString)]
-                                    .CallMethodWithResult<object>(o, t.GetGenericArguments(), m)
+                                    .CallMethodWithResult<object>(o, t.GetGenericArguments(), m, a)
                         };
                     }
                 }
@@ -224,7 +225,7 @@ Second parser for type '{targetTypeForParsing.FullName}': ''{parser.FullName}");
                 var parameters = method.GetParameters();
 
                 // For both parser methods the parameters must be two
-                if (parameters.Length != 2)
+                if (parameters.Length != 3)
                     return false;
 
                 // This parser method must have a return string type
@@ -233,7 +234,8 @@ Second parser for type '{targetTypeForParsing.FullName}': ''{parser.FullName}");
 
                 // This parser method must have two parameter like below.
                 return parameters[0].ParameterType == targetObjectType &&
-                       parameters[1].ParameterType == typeof(G9IMemberGetter);
+                       parameters[1].ParameterType == typeof(G9IMemberGetter) &&
+                       parameters[2].ParameterType == typeof(Action<string>);
             }
 
             return false;
@@ -268,7 +270,7 @@ Second parser for type '{targetTypeForParsing.FullName}': ''{parser.FullName}");
                 var parameters = method.GetParameters();
 
                 // For both parser methods the parameters must be two
-                if (parameters.Length != 3)
+                if (parameters.Length != 4)
                     return false;
 
                 // This parser method must have a return string type
@@ -278,7 +280,8 @@ Second parser for type '{targetTypeForParsing.FullName}': ''{parser.FullName}");
                 // This parser method must have two parameter like below.
                 return parameters[0].ParameterType == typeof(object) &&
                        parameters[1].ParameterType == typeof(Type[]) &&
-                       parameters[2].ParameterType == typeof(G9IMemberGetter);
+                       parameters[2].ParameterType == typeof(G9IMemberGetter) &&
+                       parameters[3].ParameterType == typeof(Action<string>);
             }
 
             return false;

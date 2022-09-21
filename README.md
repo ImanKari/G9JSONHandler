@@ -5,9 +5,9 @@
 [![Github Repository](https://raw.githubusercontent.com/ImanKari/G9JSONHandler/main/G9JSONHandler/Asset/GitHub.png?raw=true)](https://github.com/ImanKari/G9JSONHandler)
 
 # G9JSONHandler
-### A pretty small .NET library has been developed for working with JSON. This library provides many helpful attributes for members like [Comment](#g9attrcomment), [Encryption](#g9attrencryption), [CustomName](#g9attrcustomname), [Ignoring](#g9attrignore), [CustomParser](#g9attrcustomname), etc. On the other hand, with the [custom parser structure](#advanced), you can define your desired parsing process for specific types, or with a [preferred config](#object-to-json), you can [customize the parsing](#json-to-object-with-custom-config) process, which leads to more flexibility.
+### A pretty small .NET library has been developed for working with JSON. This library provides many helpful attributes for members like [Comment](#g9attrcomment), [Encryption](#g9attrencryption), [CustomName](#g9attrcustomname), [Ordering](#g9attrorder), [Ignoring](#g9attrignore), [CustomParser](#g9attrcustomname), etc. On the other hand, with the [custom parser structure](#advanced), you can define your desired parsing process for specific types, or with a [preferred config](#object-to-json), you can [customize the parsing](#json-to-object-with-custom-config) process, which leads to more flexibility.
 
-# Overview
+# ❇️Guide
 ## Implementation
 In the first step, needs to consider a custom structure:
 ```csharp
@@ -228,6 +228,25 @@ private static void Main()
 - ### **G9AttrCustomName**
   - This attribute enables you to choose a custom name for a member for storing in JSON.
     - Note: At parsing time (JSON to object), the parser can recognize and pair the member automatically.
+- ### **G9AttrOrder**
+  - This attribute enables you to specify the order of members of an object when they want to be written to a JSON structure.
+    ```csharp
+    public class Sample
+    {
+        [G9AttrOrder(3)]
+        public int C = 3;
+        [G9AttrOrder(2)]
+        public int B = 2;
+        [G9AttrOrder(1)]
+        public int A = 1;
+    }
+    // Expected result:
+    // {
+    //  "A": 1,
+    //  "B": 2,
+    //  "C": 3,
+    // }
+    ``` 
 - ### **G9AttrIgnore**
   - This attribute enables you to ignore a member for storing in JSON.
 - ### **G9AttrCustomParser**
@@ -343,8 +362,11 @@ public class ClassA
 public class CustomParserStructureForClassA : G9ACustomTypeParser<ClassA>
 {
   // Method to parse specified object (ClassA) to string.
-  public override string ObjectToString(ClassA objectForParsing, G9IMemberGetter accessToObjectMember)
+  public override string ObjectToString(ClassA objectForParsing, G9IMemberGetter accessToObjectMember, Action<string> addCustomComment)
   {
+      addCustomComment("My custom comment 1");
+      addCustomComment("My custom comment 2");
+      addCustomComment("My custom comment 3");
       return objectForParsing.A + "TM-" + (objectForParsing.B - 3);
   }
   // Method to parse string to specified object (ClassA).
@@ -366,9 +388,10 @@ var objectData = jsonData.G9JsonToObject<ClassA>();
 objectData.A; // "G9TM"
 objectData.B; // 6
 ```
-- Note: The JSON core creates an instance from 'CustomParserStructureForClassA' automatically. So, this class must not have a constructor with a parameter; otherwise, an exception is thrown.
+- Note: The JSON core creates an instance from "CustomParserStructureForClassA" automatically. So, this class must not have a constructor with a parameter; otherwise, an exception is thrown.
 - Note: Each type can have just one parser. An exception is thrown if you define a parser more than one for a type.
-- Note: The second parameter, '**G9IMemberGetter**' in both methods, consists of helpful information about a member (field or property) in an object. If the object wasn't a member of another object (like the above example), these parameters have a null value.
+- Note: The second parameter, "**G9IMemberGetter**" in both methods, consists of helpful information about a member (field or property) in an object. If the object wasn't a member of another object (like the above example), these parameters have a null value.
+- Note: The third parameter, "**addCustomComment**", is a callback action that sets a comment for the specified member if needed. Using that leads to making a comment before this member in the string structure. Using that is optional; it can be used several times or not used at all.
 - **Notice: This parser type uses a created instance for all members with the specified type in an object. Its meaning is if you use some things in the body of the class (out of methods) like fields and properties, those things are used for all members with the specified type, and maybe a conflict occurs during parse time. To prevent this type of conflict, you must use another abstract class called 'G9ACustomTypeParserUnique<>'. For this type, per each member, a new instance is created and, after use, deleted (don't use it unless in mandatory condition because it has a bad performance in terms of memory usage and speed).**
 
 ### Defining the advanced parser for a specified (**generic**) type
@@ -395,8 +418,12 @@ public class CustomParserStructureForClassB : G9ACustomGenericTypeParser
   }
   // Method to parse specified generic object (ClassB<>) to string.
   // The second parameter 'genericTypes', Specifies the type of generic parameters for target type.
-  public override string ObjectToString(object objectForParsing, Type[] genericTypes, G9IMemberGetter accessToObjectMember)
+  public override string ObjectToString(object objectForParsing, Type[] genericTypes, G9IMemberGetter accessToObjectMember, Action<string> addCustomComment)
   {
+      addCustomComment("My custom comment 1");
+      addCustomComment("My custom comment 2");
+      addCustomComment("My custom comment 3");
+
       var fields = G9Assembly.ObjectAndReflectionTools
         .GetFieldsOfObject(objectForParsing).ToDictionary(s => s.Name);
       return fields[nameof(G9CClassD<object>.A)].GetValue<string>() + "-" +
@@ -426,6 +453,7 @@ objectData.B; // "None"
 - Note: The JSON core creates an instance from 'CustomParserStructureForClassB' automatically. So, this class must not have a constructor with a parameter; otherwise, an exception is thrown.
 - Note: Each type can have just one parser. An exception is thrown if you define a parser more than one for a type.
 - Note: The third parameter, '**G9IMemberGetter**' in both methods, consists of helpful information about a member (field or property) in an object. If the object wasn't a member of another object (like the above example), these parameters have a null value.
+- Note: The fourth parameter, "**addCustomComment**", is a callback action that sets a comment for the specified member if needed. Using that leads to making a comment before this member in the string structure. Using that is optional; it can be used several times or not used at all.
 - **Notice: This parser type uses a created instance for all members with the specified type in an object. Its meaning is if you use some things in the body of the class (out of methods) like fields and properties, those things are used for all members with the specified type, and maybe a conflict occurs during parse time. To prevent this type of conflict, you must use another abstract class called 'G9ACustomGenericTypeParserUnique'. For this type, per each member, a new instance is created and, after use, deleted (don't use it unless in mandatory condition because it has a bad performance in terms of memory usage and speed).**
 
 # END

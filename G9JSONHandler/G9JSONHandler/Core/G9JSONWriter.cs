@@ -222,6 +222,26 @@ namespace G9JSONHandler.Core
                     WriteJsonNoteComment(stringBuilder, note.CustomNote, tabsNumber,
                         commentNumber++);
 
+            // Check custom parser
+            object customParseValue = null;
+            if (G9CJsonCommon.CustomParserCollection != null &&
+                G9CJsonCommon.CustomParserCollection.ContainsKey(type.IsGenericType
+                    ? type.GetGenericTypeDefinition()
+                    : type))
+            {
+                var tNumber = tabsNumber;
+                // If a custom parser for this type exists, the comments of that must be written before its value.
+                // So, the writing comment process is performed here and its value for writing would be pass to next steps.
+                customParseValue = G9CJsonCommon
+                    .CustomParserCollection[type.IsGenericType ? type.GetGenericTypeDefinition() : type]
+                    .Item2(objectItem, type, null,
+                        customComment =>
+                        {
+                            // ReSharper disable once AccessToModifiedClosure
+                            WriteJsonNoteComment(stringBuilder, customComment, tNumber, commentNumber++);
+                        });
+            }
+
             if (!_writerConfig.IsFormatted)
                 stringBuilder.Append('{');
             else
@@ -231,16 +251,10 @@ namespace G9JSONHandler.Core
 
             var isFirst = true;
 
-            // Check custom parse for a member in interface way
-            if (G9CJsonCommon.CustomParserCollection != null &&
-                G9CJsonCommon.CustomParserCollection.ContainsKey(type.IsGenericType
-                    ? type.GetGenericTypeDefinition()
-                    : type))
+            // Check custom parse value if existed
+            if (customParseValue != null)
             {
-                ParseObjectMembersToJson(stringBuilder,
-                    G9CJsonCommon.CustomParserCollection[type.IsGenericType ? type.GetGenericTypeDefinition() : type]
-                        .Item2(objectItem, type, null),
-                    ref tabsNumber);
+                ParseObjectMembersToJson(stringBuilder, customParseValue, ref tabsNumber);
             }
             else
             {
@@ -254,7 +268,7 @@ namespace G9JSONHandler.Core
                                 s => s.CanRead && !s.GetCustomAttributes(typeof(G9AttrIgnoreAttribute), true)
                                     .Any())
                             .Select(s => (G9IMember)s)
-                    ).ToArray();
+                    ).OrderBy(MemberOrderHandler).ToArray();
 
                 // Parsing process
                 foreach (var m in objectMembers)
@@ -273,6 +287,26 @@ namespace G9JSONHandler.Core
                             WriteJsonNoteComment(stringBuilder, note.CustomNote, tabsNumber,
                                 commentNumber++);
 
+                    // Check custom parser
+                    object nestedCustomParseValue = null;
+                    if (G9CJsonCommon.CustomParserCollection != null &&
+                        G9CJsonCommon.CustomParserCollection.ContainsKey(m.MemberType.IsGenericType
+                            ? m.MemberType.GetGenericTypeDefinition()
+                            : m.MemberType))
+                    {
+                        var tNumber = tabsNumber;
+                        // If a custom parser for this type exists, the comments of that must be written before its value.
+                        // So, the writing comment process is performed here and its value for writing would be pass to next steps.
+                        nestedCustomParseValue = G9CJsonCommon
+                            .CustomParserCollection[
+                                m.MemberType.IsGenericType ? m.MemberType.GetGenericTypeDefinition() : m.MemberType]
+                            .Item2(value, m.MemberType, m,
+                                customComment =>
+                                {
+                                    WriteJsonNoteComment(stringBuilder, customComment, tNumber, commentNumber++);
+                                });
+                    }
+
                     stringBuilder.Append('\"');
                     var nameAttr = m.GetCustomAttribute<G9AttrCustomNameAttribute>(true);
                     stringBuilder.Append(nameAttr != null ? nameAttr.Name : m.Name);
@@ -286,17 +320,9 @@ namespace G9JSONHandler.Core
                             encryptionDecryption.AesConfig);
 
                     // Check custom parse for a member in interface way
-                    if (G9CJsonCommon.CustomParserCollection != null &&
-                        G9CJsonCommon.CustomParserCollection.ContainsKey(m.MemberType.IsGenericType
-                            ? m.MemberType.GetGenericTypeDefinition()
-                            : m.MemberType))
+                    if (nestedCustomParseValue != null)
                     {
-                        ParseObjectMembersToJson(stringBuilder,
-                            G9CJsonCommon
-                                .CustomParserCollection[
-                                    m.MemberType.IsGenericType ? m.MemberType.GetGenericTypeDefinition() : m.MemberType]
-                                .Item2(value, m.MemberType, m),
-                            ref tabsNumber);
+                        ParseObjectMembersToJson(stringBuilder, nestedCustomParseValue, ref tabsNumber);
                     }
                     else
                     {
@@ -316,6 +342,14 @@ namespace G9JSONHandler.Core
             }
 
             stringBuilder.Append(!_writerConfig.IsFormatted ? "}" : $"\n{new string('\t', --tabsNumber)}}}");
+        }
+
+        /// <summary>
+        ///     Helper method for ordering the members for writing.
+        /// </summary>
+        private static uint MemberOrderHandler(G9IMember member)
+        {
+            return member.GetCustomAttribute<G9AttrOrderAttribute>(true)?.OrderNumber ?? uint.MaxValue;
         }
 
         /// <summary>
