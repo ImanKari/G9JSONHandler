@@ -51,9 +51,8 @@ namespace G9JSONHandler.DataType
         ///     <para />
         ///     In nonstandard mode, this JSON library saves comments notes between two signs ("/* Comment Data  /*").
         /// </param>
-        public G9DtJsonWriterConfig(BindingFlags accessibleModifiers =
-                BindingFlags.Instance | BindingFlags.Public, bool isFormatted = false,
-            G9ECommentMode commentMode = G9ECommentMode.StandardMode)
+        public G9DtJsonWriterConfig(BindingFlags accessibleModifiers = BindingFlags.Instance | BindingFlags.Public,
+            bool isFormatted = false, G9ECommentMode commentMode = G9ECommentMode.StandardMode)
         {
             CommentMode = commentMode;
             IsFormatted = isFormatted;

@@ -32,8 +32,8 @@ namespace G9JSONHandler.DataType
         ///     Specifies that if in the parsing process a mismatch occurs, the exception (mismatch) on the member that has it must
         ///     be ignored or not.
         /// </param>
-        public G9DtJsonParserConfig(BindingFlags accessibleModifiers =
-            BindingFlags.Instance | BindingFlags.Public, bool ignoreMismatching = false)
+        public G9DtJsonParserConfig(BindingFlags accessibleModifiers = BindingFlags.Instance | BindingFlags.Public,
+            bool ignoreMismatching = false)
         {
             AccessibleModifiers = accessibleModifiers;
             IgnoreMismatching = ignoreMismatching;
