@@ -4,7 +4,7 @@
 		<TargetFrameworks>net35;net40;net45;netstandard2.0;netstandard2.1</TargetFrameworks>
 		<GeneratePackageOnBuild>true</GeneratePackageOnBuild>
 		<PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
-		<Version>3.0.1.0</Version>
+		<Version>3.0.1.1</Version>
 		<Authors>Iman Kari</Authors>
 		<Company>G9Studio</Company>
 		<Product>G9 JSON Handler</Product>
@@ -18,7 +18,7 @@
 		<NeutralLanguage>en</NeutralLanguage>
 		<PackageIcon>G9-Icon.png</PackageIcon>
 		<PackageIconUrl />
-		<AssemblyVersion>3.0.1.0</AssemblyVersion>
+		<AssemblyVersion>3.0.1.1</AssemblyVersion>
 		<PackageReleaseNotes>-- Added a feature for adding a custom comment in the custom parser.
 -- Added order attribute.
 -- Added access modifiers for searching the members of an object in configs.
@@ -27,7 +27,7 @@
 -- Redesign structure
 -- Added assembly update.
 -- Completed tests.</PackageReleaseNotes>
-		<FileVersion>3.0.1.0</FileVersion>
+		<FileVersion>3.0.1.1</FileVersion>
 
 		<EmbedAllSources>True</EmbedAllSources>
 		<!--<SymbolPackageFormat>snupkg</SymbolPackageFormat>-->

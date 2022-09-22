@@ -303,7 +303,7 @@ private static void Main()
       public int Number3 = 7;
   }
     ``` 
-    - Note: The second parameter, 'G9IMemberGetter' in both methods, consists of helpful information about a member (field or property) in an object.
+    - Note: The second parameter, 'G9IMemberGetter' in both parser methods, consists of helpful information about a member (field or property) in an object.
 - ### **G9AttrEncryption**
   - This attribute enables you to add automated encrypting and decrypting processes for a member value.
   - Note: The specified member must have a convertible value to the string type.
@@ -457,4 +457,4 @@ objectData.B; // "None"
 - **Notice: This parser type uses a created instance for all members with the specified type in an object. Its meaning is if you use some things in the body of the class (out of methods) like fields and properties, those things are used for all members with the specified type, and maybe a conflict occurs during parse time. To prevent this type of conflict, you must use another abstract class called 'G9ACustomGenericTypeParserUnique'. For this type, per each member, a new instance is created and, after use, deleted (don't use it unless in mandatory condition because it has a bad performance in terms of memory usage and speed).**
 
 # END
-## Be the best you can be; the future depends on it.
+## Be the best you can be; the future depends on it. 🚀

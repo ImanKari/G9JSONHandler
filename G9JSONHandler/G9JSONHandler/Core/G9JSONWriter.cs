@@ -19,6 +19,11 @@ namespace G9JSONHandler.Core
     internal static class G9JsonWriter
     {
         /// <summary>
+        ///     Specified the default order number for members
+        /// </summary>
+        private const uint DefaultOrderNumber = uint.MaxValue / 2;
+
+        /// <summary>
         ///     Specifies the separator according to format mode.
         /// </summary>
         [ThreadStatic] private static string _separator;
@@ -349,7 +354,7 @@ namespace G9JSONHandler.Core
         /// </summary>
         private static uint MemberOrderHandler(G9IMember member)
         {
-            return member.GetCustomAttribute<G9AttrOrderAttribute>(true)?.OrderNumber ?? uint.MaxValue;
+            return member.GetCustomAttribute<G9AttrOrderAttribute>(true)?.OrderNumber ?? DefaultOrderNumber;
         }
 
         /// <summary>
