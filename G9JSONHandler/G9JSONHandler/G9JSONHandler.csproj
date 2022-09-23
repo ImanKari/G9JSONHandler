@@ -8,13 +8,13 @@
 		<Authors>Iman Kari</Authors>
 		<Company>G9Studio</Company>
 		<Product>G9 JSON Handler</Product>
-		<Description>A pretty small library for JSON</Description>
+		<Description>A pretty small .NET library has been developed for working with JSON. This library provides many helpful attributes for members like Comment, Encryption, CustomName, Ordering, Ignoring, CustomParser, etc. On the other hand, with the custom parser structure, you can define your desired parsing process for specific types, or with a preferred config, you can customize the parsing process, which leads to more flexibility.</Description>
 		<Copyright>G9Studio - 2022</Copyright>
 		<PackageLicenseFile>LICENSE.md</PackageLicenseFile>
 		<PackageProjectUrl>http://www.G9TM.com</PackageProjectUrl>
 		<RepositoryUrl>https://github.com/ImanKari/G9JSONHandler</RepositoryUrl>
 		<RepositoryType>GitHub</RepositoryType>
-		<PackageTags>Parser JsonParser JsonWriter JSON Handler Management JsonHandler</PackageTags>
+		<PackageTags>json Parser JsonParser Writer JsonWriter JSON Handler Management JsonHandler</PackageTags>
 		<NeutralLanguage>en</NeutralLanguage>
 		<PackageIcon>G9-Icon.png</PackageIcon>
 		<PackageIconUrl />
