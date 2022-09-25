@@ -83,6 +83,21 @@ private static void Main()
     Console.WriteLine(formattedNonstandardJson);
 }
 ```
+## Object To JSON File And Vice Versa
+Also, you can save a parsed object to a JSON file, and vice versa; you can read a JSON file and parse its data to your desired object directly.
+```csharp
+private static void Main()
+{
+    // Sample instance
+    TestObject testObject = new TestObject();
+    
+    // Write
+    G9JSON.ObjectToJsonFile(testObject, "Test.json");
+
+    // Read
+    var jsonObject = G9JSON.JsonFileToObject<TestObject>("Test.json");
+}
+```
 ## Results
 ### In the following can be seen the results of the above methods.
 Unformatted JSON Result:
