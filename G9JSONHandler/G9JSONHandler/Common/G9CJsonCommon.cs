@@ -95,7 +95,7 @@ Second parser for type '{targetTypeForParsing.FullName}': ''{parser.FullName}");
                                     G9Assembly.InstanceTools.CreateInstanceFromType(
                                         (Type)CustomParserInstanceCollection[targetTypeForParsing]);
 
-                                var methods = G9Assembly.ObjectAndReflectionTools.GetMethodsOfObject(instance,
+                                var methods = G9Assembly.ReflectionTools.GetMethodsOfObject(instance,
                                     G9EAccessModifier.StaticAndInstance | G9EAccessModifier.Public,
                                     s => s.Name == nameof(G9ACustomTypeParser<object>.StringToObject) &&
                                          MethodValidation(s, targetTypeForParsing));
@@ -109,7 +109,7 @@ Second parser for type '{targetTypeForParsing.FullName}': ''{parser.FullName}");
                                     G9Assembly.InstanceTools.CreateInstanceFromType(
                                         (Type)CustomParserInstanceCollection[targetTypeForParsing]);
 
-                                var methods = G9Assembly.ObjectAndReflectionTools.GetMethodsOfObject(instance,
+                                var methods = G9Assembly.ReflectionTools.GetMethodsOfObject(instance,
                                     G9EAccessModifier.StaticAndInstance | G9EAccessModifier.Public,
                                     s => s.Name == nameof(G9ACustomTypeParser<object>.ObjectToString) &&
                                          MethodValidation(s, targetTypeForParsing));
@@ -127,7 +127,7 @@ Second parser for type '{targetTypeForParsing.FullName}': ''{parser.FullName}");
                                     G9Assembly.InstanceTools.CreateInstanceFromType(
                                         (Type)CustomParserInstanceCollection[targetTypeForParsing]);
 
-                                var methods = G9Assembly.ObjectAndReflectionTools.GetMethodsOfObject(instance,
+                                var methods = G9Assembly.ReflectionTools.GetMethodsOfObject(instance,
                                     G9EAccessModifier.StaticAndInstance | G9EAccessModifier.Public,
                                     s => s.Name == nameof(G9ACustomGenericTypeParser.StringToObject) &&
                                          MethodValidationForGenericTypes(s));
@@ -141,7 +141,7 @@ Second parser for type '{targetTypeForParsing.FullName}': ''{parser.FullName}");
                                     G9Assembly.InstanceTools.CreateInstanceFromType(
                                         (Type)CustomParserInstanceCollection[targetTypeForParsing]);
 
-                                var methods = G9Assembly.ObjectAndReflectionTools.GetMethodsOfObject(instance,
+                                var methods = G9Assembly.ReflectionTools.GetMethodsOfObject(instance,
                                     G9EAccessModifier.StaticAndInstance | G9EAccessModifier.Public,
                                     s => s.Name == nameof(G9ACustomGenericTypeParser.ObjectToString) &&
                                          MethodValidationForGenericTypes(s));
@@ -158,7 +158,7 @@ Second parser for type '{targetTypeForParsing.FullName}': ''{parser.FullName}");
 
                     if (parser.BaseType.IsGenericType)
                     {
-                        var methods = G9Assembly.ObjectAndReflectionTools.GetMethodsOfObject(instance,
+                        var methods = G9Assembly.ReflectionTools.GetMethodsOfObject(instance,
                                 G9EAccessModifier.StaticAndInstance | G9EAccessModifier.Public,
                                 s => MethodValidation(s, targetTypeForParsing)).OrderByDescending(s => s.MethodName)
                             .ToDictionary(s => s.MethodName);
@@ -175,7 +175,7 @@ Second parser for type '{targetTypeForParsing.FullName}': ''{parser.FullName}");
                     }
                     else
                     {
-                        var methods = G9Assembly.ObjectAndReflectionTools.GetMethodsOfObject(instance,
+                        var methods = G9Assembly.ReflectionTools.GetMethodsOfObject(instance,
                                 G9EAccessModifier.StaticAndInstance | G9EAccessModifier.Public,
                                 MethodValidationForGenericTypes).OrderByDescending(s => s.MethodName)
                             .ToDictionary(s => s.MethodName);

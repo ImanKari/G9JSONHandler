@@ -51,7 +51,7 @@ namespace G9JSONHandler.DataType
         /// </param>
         public G9DtJsonParserConfig(G9EAccessModifier accessibleModifiers, bool ignoreMismatching = false)
         {
-            AccessibleModifiers = G9Assembly.ObjectAndReflectionTools.CreateCustomModifier(accessibleModifiers);
+            AccessibleModifiers = G9Assembly.ReflectionTools.CreateCustomModifier(accessibleModifiers);
             IgnoreMismatching = ignoreMismatching;
         }
     }

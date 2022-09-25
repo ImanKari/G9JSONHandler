@@ -421,12 +421,12 @@ namespace G9JSONHandler.Core
 
             // Prepare Fields
             CreateDictionaryOfMembers(ref members,
-                G9Assembly.ObjectAndReflectionTools.GetFieldsOfObject(instance, _parserConfig.AccessibleModifiers,
+                G9Assembly.ReflectionTools.GetFieldsOfObject(instance, _parserConfig.AccessibleModifiers,
                     s => !s.GetCustomAttributes(typeof(G9AttrIgnoreAttribute), true).Any()));
 
             // Prepare Properties
             CreateDictionaryOfMembers(ref members,
-                G9Assembly.ObjectAndReflectionTools.GetPropertiesOfObject(instance, _parserConfig.AccessibleModifiers,
+                G9Assembly.ReflectionTools.GetPropertiesOfObject(instance, _parserConfig.AccessibleModifiers,
                     s => s.CanWrite && !s.GetCustomAttributes(typeof(G9AttrIgnoreAttribute), true).Any()));
 
             for (var i = 0; i < elems.Count; i += 2)

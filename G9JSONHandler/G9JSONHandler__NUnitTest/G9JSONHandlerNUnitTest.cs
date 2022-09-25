@@ -1,4 +1,5 @@
 using System;
+using System.IO;
 using System.Linq;
 using System.Net;
 using System.Reflection;
@@ -20,6 +21,13 @@ namespace G9JSONHandler_NUnitTest
         private readonly bool _isDotNet35 = true;
 #else
         private readonly bool _isDotNet35 = false;
+#endif
+
+        private readonly string _configPath =
+#if (NET35 || NET40 || NET45)
+            AppDomain.CurrentDomain.BaseDirectory;
+#else
+            AppContext.BaseDirectory;
 #endif
 
         // ReSharper disable once ArrangeObjectCreationWhenTypeEvident
@@ -442,7 +450,6 @@ If the value structure is correct, it seems that the default parser can't parse 
                         ));
         }
 
-
         [Test]
         [Order(9)]
         public void TestJsonProcessWithCustomAccessModifiers()
@@ -471,7 +478,7 @@ If the value structure is correct, it seems that the default parser can't parse 
         }
 
         [Test]
-        [Order(9)]
+        [Order(10)]
         public void TestTheOrderAttributes()
         {
             var orderObject = new G9DtOrders();
@@ -483,6 +490,52 @@ If the value structure is correct, it seems that the default parser can't parse 
                 Assert.True(lines[i - 1].Contains($"\"Order{i}\": \"Order{i}\""));
 
             Assert.True(lines.Last().Contains("\"WithoutOrder\": \"WithoutOrder\""));
+        }
+
+        [Test]
+        [Order(11)]
+        public void TestReadAndWriteJsonFromFile()
+        {
+            var filePath = Path.Combine(_configPath, "Test.json");
+
+            if (File.Exists(filePath))
+                File.Delete(filePath);
+
+            // Write
+            G9JSON.ObjectToJsonFile(testObjectForParsing, filePath, new G9DtJsonWriterConfig(isFormatted: true));
+
+            // Read
+            var jsonObject = G9JSON.JsonFileToObject<G9DtTestObjectForParse>(filePath);
+
+            Assert.True(jsonObject.CustomObject != null &&
+                        jsonObject.DotNetBuiltInTypes != null &&
+                        jsonObject.A2 == "\"G9\"TM2\"" &&
+                        jsonObject.Gender == Gender.Unknown &&
+                        jsonObject.DotNetBuiltInTypes.H.Equals(IPAddress.Loopback) &&
+                        jsonObject.DotNetBuiltInTypes.G.Equals(new TimeSpan(9, 9, 9)) &&
+                        jsonObject.DotNetBuiltInTypes.E.Equals(DateTime.Parse("1990/09/01 09:09:09")) &&
+                        jsonObject.DotNetBuiltInTypes.C == 9.9f &&
+                        jsonObject.DotNetBuiltInTypes.C3 == 999.999m &&
+                        jsonObject.DotNetBuiltInTypes.D &&
+                        jsonObject.DotNetBuiltInTypes.F8 == 26 &&
+                        jsonObject.CustomObject.Gender == Gender.Unknown &&
+                        jsonObject.CustomObject.FullName == "\"Iman\"Kari\"" &&
+                        jsonObject.CustomObject.NestedObjectA.B == "G9TM" &&
+                        jsonObject.CustomObject.NestedObjectB.E.Equals(
+                            DateTime.Parse("1990/09/01 09:09:09")) &&
+                        jsonObject.CustomObject.NestedObjectC.H.Equals(IPAddress.Loopback) &&
+                        jsonObject.CustomObject.TestArray.Length == 9 &&
+                        jsonObject.CustomObject.TestArray[8] == "Item 9" &&
+                        jsonObject.CustomObject.TestDictionary.Count == 9 &&
+                        jsonObject.CustomObject.TestDictionary["Key 5"] == "\"Value 5" &&
+                        jsonObject.CustomObject.TestDictionary["Key 6"] == "\"Value 6\"" &&
+                        jsonObject.CustomObject.TestDictionary["Key 7"] == "Value 7\"" &&
+                        jsonObject.CustomObject.TestDictionary["Key 8"] == "\"Value 8" &&
+                        jsonObject.CustomObject.TestDictionary["Key 9"] == "Value 9" &&
+                        jsonObject.AAA[1].C && jsonObject.AAA[1].B == 2 &&
+                        jsonObject.AAA[2].C == false && jsonObject.AAA[2].B == 3 &&
+                        jsonObject.TestMultiLine == testObjectForParsing.TestMultiLine);
+
         }
     }
 }

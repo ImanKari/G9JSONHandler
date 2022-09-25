@@ -20,7 +20,7 @@ namespace G9JSONHandler_NUnitTest.ParserStructure
             addCustomComment("This Comment added by custom comment process in custom parser. Test 2.");
             addCustomComment("This Comment added by custom comment process in custom parser. Test 3.");
 
-            var fields = G9Assembly.ObjectAndReflectionTools.GetFieldsOfObject(objectForParsing)
+            var fields = G9Assembly.ReflectionTools.GetFieldsOfObject(objectForParsing)
                 .ToDictionary(s => s.Name);
 
             var extraData = string.Empty;
@@ -41,7 +41,7 @@ namespace G9JSONHandler_NUnitTest.ParserStructure
             var data = stringForParsing.Split('-');
             var instance =
                 G9Assembly.InstanceTools.CreateInstanceFromGenericType(typeof(G9CClassD<>), genericTypes);
-            var fields = G9Assembly.ObjectAndReflectionTools.GetFieldsOfObject(instance).ToDictionary(s => s.Name);
+            var fields = G9Assembly.ReflectionTools.GetFieldsOfObject(instance).ToDictionary(s => s.Name);
             fields[nameof(G9CClassD<object>.A)].SetValue(data[0]);
 
             object extraData = null;
