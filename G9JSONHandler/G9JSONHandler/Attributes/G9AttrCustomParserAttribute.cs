@@ -221,12 +221,12 @@ namespace G9JSONHandler.Attributes
             // Get access to method
             G9DtMethod parserMethod;
             if (targetObjectType.IsAbstract && targetObjectType.IsSealed)
-                parserMethod = G9Assembly.ObjectAndReflectionTools.GetMethodsOfType(targetObjectType,
+                parserMethod = G9Assembly.ReflectionTools.GetMethodsOfType(targetObjectType,
                         G9EAccessModifier.Public | G9EAccessModifier.StaticAndInstance,
                         s => s.Name == methodName && MethodValidation(isStringToObjectMethod, s, ref findButNotMatch))
                     .FirstOrDefault();
             else
-                parserMethod = G9Assembly.ObjectAndReflectionTools.GetMethodsOfType(targetObjectType,
+                parserMethod = G9Assembly.ReflectionTools.GetMethodsOfType(targetObjectType,
                         G9EAccessModifier.Public | G9EAccessModifier.StaticAndInstance,
                         s => s.Name == methodName && MethodValidation(isStringToObjectMethod, s, ref findButNotMatch),
                         true)

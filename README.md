@@ -198,7 +198,21 @@ private static void Main()
   newObject.Age; // 0 - default(int) - ignored in the mismatching process.
 }
 ```
+## Object To JSON File And Vice Versa
+Also, you can save a parsed object to a JSON file, and vice versa; you can read a JSON file and parse its data to your desired object directly.
+```csharp
+private static void Main()
+{
+    // Sample instance
+    TestObject testObject = new TestObject();
+    
+    // Write
+    G9JSON.ObjectToJsonFile(testObject, "Test.json");
 
+    // Read
+    var jsonObject = G9JSON.JsonFileToObject<TestObject>("Test.json");
+}
+```
 ## Attributes
 
 - ### **G9AttrComment**

@@ -79,7 +79,7 @@ namespace G9JSONHandler.DataType
         {
             CommentMode = commentMode;
             IsFormatted = isFormatted;
-            AccessibleModifiers = G9Assembly.ObjectAndReflectionTools.CreateCustomModifier(accessibleModifiers);
+            AccessibleModifiers = G9Assembly.ReflectionTools.CreateCustomModifier(accessibleModifiers);
         }
     }
 }

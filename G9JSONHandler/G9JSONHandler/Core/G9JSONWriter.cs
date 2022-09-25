@@ -264,11 +264,11 @@ namespace G9JSONHandler.Core
             else
             {
                 // Get total members
-                var objectMembers = G9Assembly.ObjectAndReflectionTools.GetFieldsOfObject(objectItem,
+                var objectMembers = G9Assembly.ReflectionTools.GetFieldsOfObject(objectItem,
                         _writerConfig.AccessibleModifiers,
                         s => !s.GetCustomAttributes(typeof(G9AttrIgnoreAttribute), true).Any())
                     .Select(s => (G9IMember)s).Concat(
-                        G9Assembly.ObjectAndReflectionTools.GetPropertiesOfObject(objectItem,
+                        G9Assembly.ReflectionTools.GetPropertiesOfObject(objectItem,
                                 _writerConfig.AccessibleModifiers,
                                 s => s.CanRead && !s.GetCustomAttributes(typeof(G9AttrIgnoreAttribute), true)
                                     .Any())
