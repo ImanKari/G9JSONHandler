@@ -35,6 +35,39 @@ namespace G9JSONHandler
         }
 
         /// <summary>
+        ///     Converts a JSON string to a G9CDynamicObject.
+        /// </summary>
+        /// <param name="json">Specifies the JSON string for conversion.</param>
+        /// <param name="parserConfig">
+        ///     Specifies a custom configuration for the parsing process. If null, a default configuration is used.
+        /// </param>
+        /// <returns>A G9CDynamicObject that represents the JSON structure.</returns>
+        public static G9CDynamicObject JsonToDynamicObject(string json, G9DtJsonParserConfig parserConfig = null)
+        {
+            if (parserConfig == null)
+                parserConfig = new G9DtJsonParserConfig();
+
+            return G9JsonParser.G9JsonToObject<G9CDynamicObject>(json, parserConfig);
+        }
+
+        /// <summary>
+        ///     Converts a G9CDynamicObject to a JSON string.
+        /// </summary>
+        /// <param name="dynamicObject">The dynamic object to convert to JSON.</param>
+        /// <param name="writerConfig">
+        ///     Configuration for the JSON writer. If null, a default configuration is used.
+        /// </param>
+        /// <returns>A JSON string representation of the dynamic object.</returns>
+        public static string DynamicObjectToJson(G9CDynamicObject dynamicObject, G9DtJsonWriterConfig writerConfig = null)
+        {
+            if (writerConfig == null)
+                writerConfig = new G9DtJsonWriterConfig();
+
+            return G9JsonWriter.G9DynamicObjectToJson(dynamicObject, writerConfig);
+        }
+
+
+        /// <summary>
         ///     Method to read a JSON from a file and convert it to the desired object.
         /// </summary>
         /// <typeparam name="TType">Specifies the type of object.</typeparam>
@@ -109,7 +142,7 @@ namespace G9JSONHandler
         private static void PathValidation(string jsonFilePath, bool checkExsitance)
         {
             var result =
-                G9Assembly.InputOutputTools.CheckFilePathValidation(jsonFilePath, true, checkExsitance);
+                G9Assembly.InputOutputTools.CheckFilePathValidation(jsonFilePath, true, checkExsitance, false);
             switch (result)
             {
                 case G9EPatchCheckResult.PathNameIsIncorrect:

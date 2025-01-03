@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Dynamic;
 using System.Linq;
 using System.Text;
 using G9AssemblyManagement;
@@ -65,7 +66,11 @@ namespace G9JSONHandler.Core
 
             var type = objectItem.GetType();
 
-            if (!type.IsArray && !type.IsGenericType &&
+
+
+            if (type == typeof(ExpandoObject))
+                ParseExpandoObject(stringBuilder, (ExpandoObject)objectItem, ref tabsNumber);
+            else if (!type.IsArray && !type.IsGenericType &&
                 (type.IsEnum || G9Assembly.TypeTools.IsTypeBuiltInDotNetType(type)))
                 ParseDotNetBuiltInTypes(stringBuilder, objectItem, type);
             else if (type.IsArray || G9Assembly.TypeTools.IsEnumerableType(type))
@@ -173,7 +178,7 @@ namespace G9JSONHandler.Core
             {
                 var keyType = type.GetGenericArguments()[0];
 
-                //Refuse to output dictionary keys that aren't of type string
+                // Refuse to output dictionary keys that aren't of type string
                 if (keyType != typeof(string))
                 {
                     stringBuilder.Append("{}");
@@ -219,6 +224,8 @@ namespace G9JSONHandler.Core
         {
             var commentNumber = 0;
 
+            var isBaseObject = stringBuilder.Length == 0;
+
             // Write note comments if that existed
             var noteComments =
                 (IList<G9AttrCommentAttribute>)type.GetCustomAttributes(typeof(G9AttrCommentAttribute), true);
@@ -245,14 +252,19 @@ namespace G9JSONHandler.Core
                             // ReSharper disable once AccessToModifiedClosure
                             WriteJsonNoteComment(stringBuilder, customComment, tNumber, commentNumber++);
                         });
+
             }
 
-            if (!_writerConfig.IsFormatted)
-                stringBuilder.Append('{');
-            else
-                stringBuilder.Append(stringBuilder.Length > 0 && stringBuilder[stringBuilder.Length - 1] != '\t'
-                    ? $"\n{new string('\t', tabsNumber)}{{\n{new string('\t', ++tabsNumber)}"
-                    : $"{{\n{new string('\t', ++tabsNumber)}");
+            if (isBaseObject || customParseValue == null)
+            {
+                if (!_writerConfig.IsFormatted)
+                    stringBuilder.Append('{');
+                else
+                    stringBuilder.Append(stringBuilder.Length > 0 && stringBuilder[stringBuilder.Length - 1] != '\t'
+                        ? $"\n{new string('\t', tabsNumber)}{{\n{new string('\t', ++tabsNumber)}"
+                        : $"{{\n{new string('\t', ++tabsNumber)}");
+
+            }
 
             var isFirst = true;
 
@@ -320,9 +332,14 @@ namespace G9JSONHandler.Core
                     // Check encryption/decryption attr
                     var encryptionDecryption = m.GetCustomAttribute<G9AttrEncryptionAttribute>(true);
                     if (encryptionDecryption != null)
-                        value = G9Assembly.CryptographyTools.AesEncryptString(value.ToString(),
-                            encryptionDecryption.PrivateKey, encryptionDecryption.InitializationVector,
+                    {
+                        var encryptor = G9Assembly.CryptographyTools.InitAesCryptography(
+                            encryptionDecryption.PrivateKey,
+                            encryptionDecryption.InitializationVector,
                             encryptionDecryption.AesConfig);
+
+                        value = encryptor.EncryptString(value.ToString());
+                    }
 
                     // Check custom parse for a member in interface way
                     if (nestedCustomParseValue != null)
@@ -346,7 +363,8 @@ namespace G9JSONHandler.Core
                 }
             }
 
-            stringBuilder.Append(!_writerConfig.IsFormatted ? "}" : $"\n{new string('\t', --tabsNumber)}}}");
+            if (isBaseObject || customParseValue == null)
+                stringBuilder.Append(!_writerConfig.IsFormatted ? "}" : $"\n{new string('\t', --tabsNumber)}}}");
         }
 
         /// <summary>
@@ -375,6 +393,191 @@ namespace G9JSONHandler.Core
                 stringBuilder.Append(!_writerConfig.IsFormatted
                     ? $"\"#__Comment{commentNumber}__#\":\"{noteComment}\","
                     : $"\"#__Comment{commentNumber}__#\": \"{PrepareCharactersForStoring(noteComment)}\",\n{new string('\t', tabsNumber)}");
+        }
+
+        /// <summary>
+        ///     Converts a G9CDynamicObject to a JSON string.
+        /// </summary>
+        /// <param name="dynamicObject">The dynamic object to convert.</param>
+        /// <param name="writerConfig">Configuration for the JSON writer.</param>
+        /// <returns>A JSON string representation of the dynamic object.</returns>
+        public static string G9DynamicObjectToJson(G9CDynamicObject dynamicObject, G9DtJsonWriterConfig writerConfig)
+        {
+            if (dynamicObject == null)
+                return "null";
+
+            var stringBuilder = new StringBuilder();
+            SerializeDynamicObject(dynamicObject, stringBuilder, writerConfig, 0);
+            return stringBuilder.ToString();
+        }
+
+        /// <summary>
+        ///     Serializes a G9CDynamicObject to a JSON string.
+        /// </summary>
+        /// <param name="dynamicObject">The dynamic object to serialize.</param>
+        /// <param name="stringBuilder">StringBuilder to store the JSON structure.</param>
+        /// <param name="writerConfig">Configuration for the JSON writer.</param>
+        /// <param name="indentLevel">Current indentation level.</param>
+        private static void SerializeDynamicObject(G9CDynamicObject dynamicObject, StringBuilder stringBuilder, G9DtJsonWriterConfig writerConfig, int indentLevel)
+        {
+            var isFirst = true;
+            var indent = writerConfig.IsFormatted ? new string('\t', indentLevel) : string.Empty;
+
+            stringBuilder.Append(writerConfig.IsFormatted ? "{\n" : "{");
+
+            foreach (var kvp in dynamicObject)
+            {
+                if (isFirst)
+                    isFirst = false;
+                else
+                    stringBuilder.Append(writerConfig.IsFormatted ? ",\n" : ",");
+
+                stringBuilder.Append(writerConfig.IsFormatted ? $"{indent}\t\"{kvp.Key}\": " : $"\"{kvp.Key}\":");
+
+                if (kvp.Value is G9CDynamicObject nestedDynamicObject)
+                {
+                    stringBuilder.Append(writerConfig.IsFormatted ? "\n" + indent + "\t" : "");
+                    SerializeDynamicObject(nestedDynamicObject, stringBuilder, writerConfig, indentLevel + 1);
+                }
+                else if (kvp.Value is List<object> list)
+                {
+                    stringBuilder.Append(writerConfig.IsFormatted ? "\n" + indent + "\t" : "");
+                    SerializeList(list, stringBuilder, writerConfig, indentLevel + 1);
+                }
+                else
+                {
+                    SerializeValue(kvp.Value, stringBuilder);
+                }
+            }
+
+            stringBuilder.Append(writerConfig.IsFormatted ? $"\n{indent}}}" : "}");
+        }
+
+        /// <summary>
+        ///     Serializes a list of objects to a JSON string.
+        /// </summary>
+        /// <param name="list">The list of objects to serialize.</param>
+        /// <param name="stringBuilder">StringBuilder to store the JSON structure.</param>
+        /// <param name="writerConfig">Configuration for the JSON writer.</param>
+        /// <param name="indentLevel">Current indentation level.</param>
+        private static void SerializeList(List<object> list, StringBuilder stringBuilder, G9DtJsonWriterConfig writerConfig, int indentLevel)
+        {
+            var isFirst = true;
+            var indent = writerConfig.IsFormatted ? new string('\t', indentLevel) : string.Empty;
+
+            stringBuilder.Append(writerConfig.IsFormatted ? "[\n" : "[");
+
+            foreach (var item in list)
+            {
+                if (isFirst)
+                    isFirst = false;
+                else
+                    stringBuilder.Append(writerConfig.IsFormatted ? ",\n" : ",");
+
+                stringBuilder.Append(writerConfig.IsFormatted ? indent + "\t" : string.Empty);
+
+                if (item is G9CDynamicObject nestedDynamicObject)
+                {
+                    SerializeDynamicObject(nestedDynamicObject, stringBuilder, writerConfig, indentLevel + 1);
+                }
+                else if (item is List<object> nestedList)
+                {
+                    SerializeList(nestedList, stringBuilder, writerConfig, indentLevel + 1);
+                }
+                else
+                {
+                    SerializeValue(item, stringBuilder);
+                }
+            }
+
+            stringBuilder.Append(writerConfig.IsFormatted ? $"\n{indent}]" : "]");
+        }
+
+        /// <summary>
+        ///     Serializes a primitive value to a JSON string.
+        /// </summary>
+        /// <param name="value">The value to serialize.</param>
+        /// <param name="stringBuilder">StringBuilder to store the JSON structure.</param>
+        private static void SerializeValue(object value, StringBuilder stringBuilder)
+        {
+            if (value == null)
+            {
+                stringBuilder.Append("null");
+            }
+            else if (value is string str)
+            {
+                stringBuilder.Append($"\"{EscapeString(str)}\"");
+            }
+            else if (value is bool boolean)
+            {
+                stringBuilder.Append(boolean.ToString().ToLower());
+            }
+            else
+            {
+                stringBuilder.Append(value);
+            }
+        }
+
+        /// <summary>
+        ///     Escapes special characters in a string for JSON.
+        /// </summary>
+        /// <param name="str">The string to escape.</param>
+        /// <returns>The escaped string.</returns>
+        private static string EscapeString(string str)
+        {
+            var stringBuilder = new StringBuilder();
+            foreach (var c in str)
+            {
+                switch (c)
+                {
+                    case '\\': stringBuilder.Append("\\\\"); break;
+                    case '\"': stringBuilder.Append("\\\""); break;
+                    case '\n': stringBuilder.Append("\\n"); break;
+                    case '\r': stringBuilder.Append("\\r"); break;
+                    case '\t': stringBuilder.Append("\\t"); break;
+                    default:
+                        if (c < ' ')
+                            stringBuilder.AppendFormat("\\u{0:X4}", (int)c);
+                        else
+                            stringBuilder.Append(c);
+                        break;
+                }
+            }
+            return stringBuilder.ToString();
+        }
+
+        /// <summary>
+        ///     The helper method to parse ExpandoObject types
+        /// </summary>
+        /// <param name="stringBuilder">specifies a StringBuilder object for storing JSON structure</param>
+        /// <param name="expando">Specifies an ExpandoObject for converting to JSON</param>
+        /// <param name="tabsNumber">If the formatted option is set to true, this parameter stores the nested tab number.</param>
+        private static void ParseExpandoObject(StringBuilder stringBuilder, ExpandoObject expando, ref int tabsNumber)
+        {
+            if (!_writerConfig.IsFormatted)
+                stringBuilder.Append('{');
+            else
+                stringBuilder.Append(stringBuilder.Length > 0 && stringBuilder[stringBuilder.Length - 1] != '\t'
+                    ? $"\n{new string('\t', tabsNumber)}{{\n{new string('\t', ++tabsNumber)}"
+                    : $"{{\n{new string('\t', ++tabsNumber)}");
+
+            var isFirst = true;
+            var dictionary = (IDictionary<string, object>)expando;
+            foreach (var kvp in dictionary)
+            {
+                if (isFirst)
+                    isFirst = false;
+                else
+                    stringBuilder.Append(!_writerConfig.IsFormatted ? "," : $",\n{new string('\t', tabsNumber)}");
+
+                stringBuilder.Append('\"');
+                stringBuilder.Append(kvp.Key);
+                stringBuilder.Append(_separator);
+
+                ParseObjectMembersToJson(stringBuilder, kvp.Value, ref tabsNumber);
+            }
+
+            stringBuilder.Append(!_writerConfig.IsFormatted ? "}" : $"\n{new string('\t', --tabsNumber)}}}");
         }
     }
 }

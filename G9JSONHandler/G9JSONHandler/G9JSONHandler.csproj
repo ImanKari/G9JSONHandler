@@ -1,10 +1,10 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
 	<PropertyGroup>
-		<TargetFrameworks>net35;net40;net45;netstandard2.0;netstandard2.1</TargetFrameworks>
+		<TargetFrameworks>net40;net45;netstandard2.0;netstandard2.1</TargetFrameworks>
 		<GeneratePackageOnBuild>true</GeneratePackageOnBuild>
 		<PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
-		<Version>3.0.2.0</Version>
+		<Version>3.0.3.2</Version>
 		<Authors>Iman Kari</Authors>
 		<Company>G9Studio</Company>
 		<Product>G9 JSON Handler</Product>
@@ -18,18 +18,9 @@
 		<NeutralLanguage>en</NeutralLanguage>
 		<PackageIcon>G9-Icon.png</PackageIcon>
 		<PackageIconUrl />
-		<AssemblyVersion>3.0.2.0</AssemblyVersion>
-		<PackageReleaseNotes>-- Added directly read and write from a file.
--- Added a feature for adding a custom comment in the custom parser.
--- Added order attribute.
--- Added access modifiers for searching the members of an object in configs.
--- Added method 'GetTotalCustomParser' for accessing custom parser types.
--- Renamed attributes.
--- Redesign structure
--- Added assembly update.
--- Completed tests.</PackageReleaseNotes>
-		<FileVersion>3.0.2.0</FileVersion>
-
+		<AssemblyVersion>3.0.3.2</AssemblyVersion>
+		<FileVersion>3.0.3.2</FileVersion>
+		<PackageReleaseNotes>-- Custom parser for object item is fixed.</PackageReleaseNotes>
 		<EmbedAllSources>True</EmbedAllSources>
 		<!--<SymbolPackageFormat>snupkg</SymbolPackageFormat>-->
 		<AllowedOutputExtensionsInPackageBuildOutputFolder>$(AllowedOutputExtensionsInPackageBuildOutputFolder);.pdb</AllowedOutputExtensionsInPackageBuildOutputFolder>
@@ -68,11 +59,30 @@
 	</ItemGroup>
 
 	<ItemGroup>
-	  <PackageReference Include="G9AssemblyManagement" Version="1.4.5" />
+	  <PackageReference Include="G9AssemblyManagement" Version="1.4.5.25" />
 	</ItemGroup>
 
-	<Target Name="PostBuild" AfterTargets="PostBuildEvent">
-	  <Exec Command="Set &quot;NugetLocalTargetPath=I:\LocalNugetPackages\&quot;&#xD;&#xA;if exist &quot;%25NugetLocalTargetPath%25&quot; (&#xD;&#xA;  xcopy &quot;bin\$(ConfigurationName)\*.nupkg&quot; &quot;%25NugetLocalTargetPath%25&quot; /C /Y&#xD;&#xA;) else (&#xD;&#xA;  echo 'Post-build event command line' : warning -9: 'Nuget target path not exist!'&#xD;&#xA;)" />
+	<ItemGroup Condition="'$(TargetFramework)' == 'net45'">
+	  <PackageReference Include="Microsoft.CSharp">
+	    <Version>4.7.0</Version>
+	  </PackageReference>
+	</ItemGroup>
+
+	<ItemGroup Condition="'$(TargetFramework)' == 'netstandard2.0'">
+	  <PackageReference Include="Microsoft.CSharp">
+	    <Version>4.7.0</Version>
+	  </PackageReference>
+	</ItemGroup>
+
+	<ItemGroup Condition="'$(TargetFramework)' == 'netstandard2.1'">
+	  <PackageReference Include="Microsoft.CSharp">
+	    <Version>4.7.0</Version>
+	  </PackageReference>
+	</ItemGroup>
+
+	<Target Name="CopyPackage" AfterTargets="Pack">
+		<Copy SourceFiles="$(OutputPath)$(PackageId).$([System.Text.RegularExpressions.Regex]::Replace(&quot;$(PackageVersion)&quot;, &quot;^(.+?)(\.0+)$&quot;, &quot;$1&quot;)).nupkg" DestinationFolder="Z:\LocalNugetPackages\" Condition="Exists('Z:\LocalNugetPackages\')" />
+		<Copy SourceFiles="$(OutputPath)$(PackageId).$([System.Text.RegularExpressions.Regex]::Replace(&quot;$(PackageVersion)&quot;, &quot;^(.+?)(\.0+)$&quot;, &quot;$1&quot;)).symbols.nupkg" DestinationFolder="Z:\LocalNugetPackages\" Condition="Exists('Z:\LocalNugetPackages\')" />
 	</Target>
 
 </Project>

@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Dynamic;
 using System.Globalization;
 using System.Linq;
 using System.Text;
@@ -14,6 +15,7 @@ using G9JSONHandler.Enum;
 
 namespace G9JSONHandler.Core
 {
+
     /// <summary>
     ///     A pretty small library for JSON
     ///     A static helper class for parsing JSON
@@ -108,13 +110,13 @@ namespace G9JSONHandler.Core
                 switch (json[i])
                 {
                     case '\\':
-                    {
-                        if (appendUniqueCharacter)
-                            _stringBuilder.Append(json[i]);
-                        _stringBuilder.Append(json[i + 1]);
-                        i++; //Skip next character as it is escaped
-                        break;
-                    }
+                        {
+                            if (appendUniqueCharacter)
+                                _stringBuilder.Append(json[i]);
+                            _stringBuilder.Append(json[i + 1]);
+                            i++; //Skip next character as it is escaped
+                            break;
+                        }
                     // End of string
                     case '"':
                         _stringBuilder.Append(json[i]);
@@ -179,11 +181,54 @@ namespace G9JSONHandler.Core
         ///     The method parses the pure JSON data
         /// </summary>
         /// <param name="type">Specifies the final object type of result</param>
-        /// <param name="json">The pure JSON data</param>
+        /// <param="json">The pure JSON data</param>
         /// <returns></returns>
         private static object ParsePureJsonData(Type type, string json)
         {
             if (json == "null") return null;
+
+            // Use ParseDynamicObject for G9CDynamicObject type
+            if (type == typeof(G9CDynamicObject))
+            {
+                return ParseDynamicObject(json);
+            }
+
+            // Use ParseExpandoObject for ExpandoObject type
+            if (type == typeof(ExpandoObject))
+            {
+                return ParseExpandoObject(json);
+            }
+
+            if (type == typeof(object))
+            {
+                var dynamicObject = new G9CDynamicObject();
+
+                if (json[0] == '{' && json[json.Length - 1] == '}')
+                {
+                    var elems = Splitter(json);
+                    for (var i = 0; i < elems.Count; i += 2)
+                    {
+                        var key = elems[i].Substring(1, elems[i].Length - 2);
+                        var value = ParsePureJsonData(typeof(object), elems[i + 1]);
+                        dynamicObject[key] = value;
+                    }
+                    return dynamicObject;
+                }
+                else if (json[0] == '[' && json[json.Length - 1] == ']')
+                {
+                    var elems = Splitter(json);
+                    var list = new List<object>();
+                    foreach (var elem in elems)
+                    {
+                        list.Add(ParsePureJsonData(typeof(object), elem));
+                    }
+                    return list;
+                }
+                else
+                {
+                    return ParsingAnonymousValue(json);
+                }
+            }
 
             if (type.IsEnum || (!G9Assembly.TypeTools.IsEnumerableType(type) &&
                                 G9Assembly.TypeTools.IsTypeBuiltInDotNetType(type)))
@@ -209,57 +254,169 @@ namespace G9JSONHandler.Core
             switch (type.IsGenericType)
             {
                 case true when type.GetGenericTypeDefinition() == typeof(List<>):
-                {
-                    var listType = type.GetGenericArguments()[0];
-                    if (json[0] != '[' || json[json.Length - 1] != ']')
-                        return null;
+                    {
+                        var listType = type.GetGenericArguments()[0];
+                        if (json[0] != '[' || json[json.Length - 1] != ']')
+                            return null;
 
-                    var elems = Splitter(json);
-                    var list = (IList)type.GetConstructor(new[] { typeof(int) })?.Invoke(new object[] { elems.Count });
-                    foreach (var t in elems) list?.Add(ParsePureJsonData(listType, t));
+                        var elems = Splitter(json);
+                        var list = (IList)type.GetConstructor(new[] { typeof(int) })?.Invoke(new object[] { elems.Count });
+                        foreach (var t in elems) list?.Add(ParsePureJsonData(listType, t));
 
-                    _splitArrayPool.Push(elems);
-                    return list;
-                }
+                        _splitArrayPool.Push(elems);
+                        return list;
+                    }
                 case true when type.GetGenericTypeDefinition() == typeof(Dictionary<,>):
-                {
-                    Type keyType, valueType;
                     {
-                        var args = type.GetGenericArguments();
-                        keyType = args[0];
-                        valueType = args[1];
+                        Type keyType, valueType;
+                        {
+                            var args = type.GetGenericArguments();
+                            keyType = args[0];
+                            valueType = args[1];
+                        }
+
+                        // Refuse to parse dictionary keys that aren't of type string
+                        if (keyType != typeof(string))
+                            return null;
+                        // Must be a valid dictionary element
+                        if (json[0] != '{' || json[json.Length - 1] != '}')
+                            return null;
+                        // The list is split into key/value pairs only, this means the split must be divisible by 2 to be valid JSON
+                        var elems = Splitter(json, false);
+                        if (elems.Count % 2 != 0)
+                            return null;
+
+                        var dictionary = (IDictionary)type.GetConstructor(new[] { typeof(int) })
+                            ?.Invoke(new object[] { elems.Count / 2 });
+                        for (var i = 0; i < elems.Count; i += 2)
+                        {
+                            if (elems[i].Length <= 2)
+                                continue;
+                            var keyValue = elems[i].Substring(1, elems[i].Length - 2);
+                            var val = ParsePureJsonData(valueType, elems[i + 1]);
+                            if (dictionary != null) dictionary[keyValue] = val;
+                        }
+
+                        return dictionary;
                     }
-
-                    //Refuse to parse dictionary keys that aren't of type string
-                    if (keyType != typeof(string))
-                        return null;
-                    //Must be a valid dictionary element
-                    if (json[0] != '{' || json[json.Length - 1] != '}')
-                        return null;
-                    //The list is split into key/value pairs only, this means the split must be divisible by 2 to be valid JSON
-                    var elems = Splitter(json, false);
-                    if (elems.Count % 2 != 0)
-                        return null;
-
-                    var dictionary = (IDictionary)type.GetConstructor(new[] { typeof(int) })
-                        ?.Invoke(new object[] { elems.Count / 2 });
-                    for (var i = 0; i < elems.Count; i += 2)
-                    {
-                        if (elems[i].Length <= 2)
-                            continue;
-                        var keyValue = elems[i].Substring(1, elems[i].Length - 2);
-                        var val = ParsePureJsonData(valueType, elems[i + 1]);
-                        if (dictionary != null) dictionary[keyValue] = val;
-                    }
-
-                    return dictionary;
-                }
             }
 
             if (type == typeof(object)) return ParsingAnonymousValue(json);
             if (json[0] == '{' && json[json.Length - 1] == '}') return ParseObject(type, json);
-
+            if (G9CJsonCommon.CustomParserCollection != null &&
+                G9CJsonCommon.CustomParserCollection.ContainsKey(type.IsGenericType
+                    ? type.GetGenericTypeDefinition()
+                    : type))
+            {
+                return ParseObject(type, json);
+            }
             return null;
+        }
+
+        /// <summary>
+        ///     Method to parse a JSON string into a dynamic object (G9CDynamicObject)
+        /// </summary>
+        /// <param name="json">Specifies the JSON string</param>
+        /// <returns>A dynamic object (G9CDynamicObject) parsed from the JSON string</returns>
+        private static G9CDynamicObject ParseDynamicObject(string json)
+        {
+            var dynamicObject = new G9CDynamicObject();
+
+            if (json[0] == '{' && json[json.Length - 1] == '}')
+            {
+                var elems = Splitter(json);
+                for (var i = 0; i < elems.Count; i += 2)
+                {
+                    var key = elems[i].Substring(1, elems[i].Length - 2);
+                    var value = ParsePureJsonData(typeof(object), elems[i + 1]);
+                    dynamicObject[key] = value;
+                }
+                return dynamicObject;
+            }
+            else if (json[0] == '[' && json[json.Length - 1] == ']')
+            {
+                var elems = Splitter(json);
+                var list = new List<object>();
+                foreach (var elem in elems)
+                {
+                    list.Add(ParsePureJsonData(typeof(object), elem));
+                }
+                dynamicObject["List"] = list;
+                return dynamicObject;
+            }
+            else
+            {
+                dynamicObject["Value"] = ParsingAnonymousValue(json);
+                return dynamicObject;
+            }
+        }
+
+        /// <summary>
+        ///     Method to parse a JSON string into an ExpandoObject
+        /// </summary>
+        /// <param name="json">Specifies the JSON string</param>
+        /// <returns>An ExpandoObject parsed from the JSON string</returns>
+        private static ExpandoObject ParseExpandoObject(string json)
+        {
+            var expandoObject = new ExpandoObject();
+            var expandoDict = (IDictionary<string, object>)expandoObject;
+
+            if (json[0] == '{' && json[json.Length - 1] == '}')
+            {
+                var elems = Splitter(json);
+                for (var i = 0; i < elems.Count; i += 2)
+                {
+                    var key = elems[i].Substring(1, elems[i].Length - 2);
+                    var value = ParsePureJsonData(typeof(object), elems[i + 1]);
+
+                    if (value is IDictionary<string, object> nestedDict)
+                    {
+                        expandoDict[key] = nestedDict.ToExpandoObject();
+                    }
+                    else
+                    {
+                        expandoDict[key] = value;
+                    }
+                }
+                return expandoObject;
+            }
+            else if (json[0] == '[' && json[json.Length - 1] == ']')
+            {
+                var elems = Splitter(json);
+                var list = new List<object>();
+                foreach (var elem in elems)
+                {
+                    list.Add(ParsePureJsonData(typeof(object), elem));
+                }
+                expandoDict["List"] = list;
+                return expandoObject;
+            }
+            else
+            {
+                expandoDict["Value"] = ParsingAnonymousValue(json);
+                return expandoObject;
+            }
+        }
+
+        /// <summary>
+        /// Extension method to convert a dictionary to ExpandoObject
+        /// </summary>
+        private static ExpandoObject ToExpandoObject(this IDictionary<string, object> dictionary)
+        {
+            var expando = new ExpandoObject();
+            var expandoDict = (IDictionary<string, object>)expando;
+            foreach (var kvp in dictionary)
+            {
+                if (kvp.Value is IDictionary<string, object> nestedDict)
+                {
+                    expandoDict[kvp.Key] = nestedDict.ToExpandoObject();
+                }
+                else
+                {
+                    expandoDict[kvp.Key] = kvp.Value;
+                }
+            }
+            return expando;
         }
 
         /// <summary>
@@ -308,11 +465,13 @@ namespace G9JSONHandler.Core
         {
             if (json.Length == 0)
                 return null;
+
             if (json[0] == '{' && json[json.Length - 1] == '}')
             {
                 var elems = Splitter(json);
                 if (elems.Count % 2 != 0)
                     return null;
+
                 var dict = new Dictionary<string, object>(elems.Count / 2);
                 for (var i = 0; i < elems.Count; i += 2)
                     dict[elems[i].Substring(1, elems[i].Length - 2)] = ParsingAnonymousValue(elems[i + 1]);
@@ -330,8 +489,12 @@ namespace G9JSONHandler.Core
 
             if (json[0] == '"' && json[json.Length - 1] == '"')
             {
-                var str = json.Substring(1, json.Length - 2);
-                return str.Replace("\\", string.Empty);
+                return json.Substring(1, json.Length - 2)
+                    .Replace("\\r", "\r")
+                    .Replace("\\n", "\n")
+                    .Replace("\\t", "\t")
+                    .Replace("\\\"", "\"")
+                    .Replace("\\\\", "\\");
             }
 
             if (char.IsDigit(json[0]) || json[0] == '-')
@@ -359,6 +522,7 @@ namespace G9JSONHandler.Core
                     return null;
             }
         }
+
 
         /// <summary>
         ///     Method to create dictionary from object members
@@ -441,9 +605,12 @@ namespace G9JSONHandler.Core
                 // Check encryption/decryption attr
                 var encryptionDecryption = memberInfo.GetCustomAttribute<G9AttrEncryptionAttribute>(true);
                 if (encryptionDecryption != null)
-                    value = G9Assembly.CryptographyTools.AesDecryptString(value,
-                        encryptionDecryption.PrivateKey, encryptionDecryption.InitializationVector,
+                {
+                    var encryptor = G9Assembly.CryptographyTools.InitAesCryptography(encryptionDecryption.PrivateKey,
+                        encryptionDecryption.InitializationVector,
                         encryptionDecryption.AesConfig);
+                    value = encryptor.DecryptString(value);
+                }
 
                 // Check custom parser for a member
                 var customParser = memberInfo.GetCustomAttribute<G9AttrCustomParserAttribute>(true);
@@ -457,9 +624,7 @@ namespace G9JSONHandler.Core
                             : memberInfo.MemberType))
                         memberInfo.SetValue(G9CJsonCommon
                             .CustomParserCollection[
-                                memberInfo.MemberType.IsGenericType
-                                    ? memberInfo.MemberType.GetGenericTypeDefinition()
-                                    : memberInfo.MemberType]
+                                memberInfo.MemberType.IsGenericType ? memberInfo.MemberType.GetGenericTypeDefinition() : memberInfo.MemberType]
                             .Item1(value, memberInfo.MemberType, memberInfo, null));
                     else if (customParser != null && customParser.ParserType != G9ECustomParserType.ObjectToJson)
                         memberInfo.SetValue(
@@ -509,4 +674,5 @@ If the value structure is correct, it seems that the default parser can't parse 
             return value;
         }
     }
+
 }
